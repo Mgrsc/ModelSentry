@@ -1,0 +1,779 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{title}} - 模型价格</title>
+    <link rel="icon" href="{{faviconUrl}}" type="image/x-icon">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+        :root {
+            /* Color Palette - Retro Illustration */
+            --bg-color: #fef6e4;
+            --card-bg: #fffbf5;
+            --text-primary: #001858;
+            --text-secondary: #172c66;
+            --text-tertiary: #6b7c93;
+
+            --primary-color: #f582ae;
+            --primary-hover: #e86ba0;
+            --primary-light: rgba(245, 130, 174, 0.15);
+            --primary-text: #001858;
+
+            --accent-cyan: #8bd3dd;
+            --accent-apricot: #f3d2c1;
+
+            --border-color: #f3d2c1;
+            --shadow-sm: 2px 2px 0px rgba(0, 24, 88, 0.1);
+            --shadow-md: 4px 4px 0px rgba(0, 24, 88, 0.1);
+            --shadow-lg: 8px 8px 0px rgba(0, 24, 88, 0.1);
+
+            --radius-sm: 8px;
+            --radius-md: 12px;
+            --radius-lg: 16px;
+
+            --status-success-bg: #8bd3dd;
+            --status-success-text: #001858;
+            --status-error-bg: #f3d2c1;
+            --status-error-text: #5e1c1c;
+            --status-neutral-bg: #e6e9f0;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: var(--bg-color);
+            background-image: radial-gradient(circle at 50% 0%, rgba(217, 119, 87, 0.05) 0%, transparent 60%);
+            min-height: 100vh;
+            color: var(--text-primary);
+            line-height: 1.6;
+            padding-bottom: 4rem;
+        }
+
+        .container {
+            max-width: 1400px; /* Wider layout */
+            margin: 0 auto;
+            padding: 4rem 2rem;
+        }
+
+        /* Header - Grand */
+        .header {
+            text-align: left;
+            margin-bottom: 5rem;
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            flex-wrap: wrap;
+            gap: 2rem;
+        }
+
+        .header h1 {
+            font-size: 3.5rem;
+            font-weight: 900;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+            line-height: 1;
+            letter-spacing: -0.03em;
+        }
+
+        .subtitle {
+            font-size: 1.2rem;
+            color: var(--text-secondary);
+            margin-bottom: 0;
+            max-width: 600px;
+        }
+
+        .actions-bar {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 0;
+            align-items: center;
+        }
+
+        /* Buttons */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0.8rem 1.5rem;
+            font-size: 1rem;
+            font-weight: 700;
+            border-radius: var(--radius-md);
+            letter-spacing: 0.02em;
+            text-decoration: none;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 2px solid transparent;
+            line-height: 1.2;
+            gap: 0.5rem;
+        }
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            color: var(--primary-text);
+            border-color: var(--primary-color);
+        }
+        .btn-primary:hover {
+            background-color: var(--primary-hover);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .btn-secondary {
+            background-color: transparent;
+            color: var(--text-secondary);
+            border-color: var(--border-color);
+        }
+        .btn-secondary:hover {
+            border-color: var(--text-secondary);
+            background-color: var(--card-bg);
+            transform: translateY(-2px);
+            text-decoration: none;
+        }
+
+        .btn-xs {
+            padding: 0.4rem 0.8rem;
+            font-size: 0.85rem;
+            border-radius: var(--radius-sm);
+            border-width: 1px;
+        }
+
+        /* Dropdown */
+        .dropdown {
+            position: relative;
+            display: inline-block;
+        }
+
+        .dropdown-menu {
+            display: none;
+            position: absolute;
+            right: 0;
+            top: 100%;
+            margin-top: 0.5rem;
+            background-color: white;
+            min-width: 160px;
+            box-shadow: var(--shadow-md);
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--border-color);
+            z-index: 1000;
+            overflow: hidden;
+            flex-direction: column;
+        }
+
+        .dropdown-menu.show {
+            display: flex;
+            animation: slideDown 0.2s ease;
+        }
+
+        .dropdown-item {
+            padding: 0.8rem 1rem;
+            text-decoration: none;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            border-bottom: 1px solid #f0f0f0;
+            transition: background 0.2s;
+            display: block;
+        }
+
+        .dropdown-item:last-child {
+            border-bottom: none;
+        }
+
+        .dropdown-item:hover {
+            background-color: #f8f9fa;
+            color: var(--primary-color);
+        }
+
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Refresh Icon Animation */
+        .refresh-icon {
+            display: inline-block;
+            transition: transform 0.3s ease;
+        }
+
+        .btn:disabled .refresh-icon {
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        /* Status Badges */
+        .status-badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 99px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .status-badge.success {
+            background-color: var(--status-success-bg);
+            color: var(--status-success-text);
+        }
+
+        .status-badge.error {
+            background-color: var(--status-error-bg);
+            color: var(--status-error-text);
+        }
+
+        /* Grid - Optimized Density */
+        .pricing-grid {
+            display: grid;
+            grid-template-columns: 1fr; /* Single column layout */
+            gap: 2rem;
+        }
+
+        .pricing-card {
+            background: var(--card-bg);
+            border-radius: var(--radius-lg);
+            border: 2px solid var(--border-color);
+            box-shadow: var(--shadow-sm);
+            overflow: hidden;
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .pricing-card:hover {
+            box-shadow: var(--shadow-lg);
+            border-color: var(--text-primary);
+            transform: translateY(-4px);
+        }
+
+        .card-header {
+            padding: 1.5rem;
+            border-bottom: 2px dashed var(--border-color);
+            background-color: transparent;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .provider-info {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .provider-icon-wrapper {
+            width: 42px;
+            height: 42px;
+        }
+
+        .provider-icon-wrapper img, .provider-icon-wrapper svg {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        .provider-name {
+            font-size: 1.25rem;
+            font-weight: 800;
+            color: var(--text-primary);
+        }
+
+        .provider-link {
+            text-decoration: none;
+            color: inherit;
+            transition: all 0.2s;
+        }
+
+        .provider-link:hover {
+            color: var(--primary-color);
+            text-decoration: underline;
+        }
+
+        /* Table - Clean & Readable */
+        .table-responsive {
+            width: 100%;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .pricing-table {
+            width: 100%;
+            border-collapse: collapse;
+            white-space: nowrap;
+        }
+
+        .pricing-table th {
+            background-color: transparent;
+            padding: 0.8rem 1.5rem;
+            font-size: 0.75rem;
+            font-weight: 800;
+            color: var(--text-tertiary);
+            border-bottom: 2px solid var(--border-color);
+            text-align: left;
+        }
+
+        .pricing-table td {
+            padding: 0.8rem 1.5rem;
+            font-size: 0.95rem;
+            border-bottom: 1px solid var(--border-color);
+            vertical-align: middle;
+        }
+
+        .model-cell {
+            font-size: 1rem;
+            font-weight: 700;
+        }
+
+        .price-cell {
+            font-size: 1rem;
+            font-weight: 600;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .ratio-cell {
+            padding: 4px 10px !important;
+            font-size: 0.85rem;
+            background-color: var(--status-neutral-bg);
+            color: var(--text-primary);
+            font-weight: 600;
+            border-radius: 4px;
+        }
+
+        .pricing-table td:has(.ratio-cell) {
+            padding: 0.8rem 1.5rem !important; /* Restore padding */
+        }
+
+        .empty-state {
+            padding: 3rem;
+            text-align: center;
+            color: var(--text-tertiary);
+            font-style: italic;
+        }
+
+        .error-message {
+            padding: 2rem;
+            background-color: var(--status-error-bg);
+            color: var(--status-error-text);
+            text-align: center;
+        }
+
+        .last-updated {
+            padding: 1rem 2rem;
+            text-align: right;
+            font-size: 0.75rem;
+            color: var(--text-tertiary);
+            background-color: #fafafa;
+            border-top: 1px solid var(--border-color);
+            margin-top: auto;
+        }
+
+        .footer {
+            margin-top: 4rem;
+            text-align: center;
+            font-size: 0.85rem;
+            color: var(--text-tertiary);
+        }
+
+        /* Toast */
+        #toast-container {
+            position: fixed;
+            bottom: 2rem;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .toast {
+            background: #333;
+            color: white;
+            padding: 0.8rem 1.5rem;
+            border-radius: 8px;
+            box-shadow: var(--shadow-lg);
+            font-size: 0.9rem;
+            animation: slideUp 0.3s cubic-bezier(0.18, 0.89, 0.32, 1.28);
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .toast.show { opacity: 1; }
+        .toast.error { background: #d32f2f; }
+
+        @keyframes slideUp {
+            from { transform: translateY(100%); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        @media (max-width: 768px) {
+            .header h1 { font-size: 2rem; }
+            .card-header { flex-direction: column; align-items: flex-start; gap: 1rem; }
+            .header-actions { width: 100%; justify-content: space-between; }
+            .pricing-table th, .pricing-table td { padding: 0.75rem 1rem; font-size: 0.8rem; }
+            .price-cell { font-size: 0.8rem; }
+        }
+    </style>
+</head>
+<body>
+    <div id="toast-container"></div>
+
+    <div class="container">
+        <header class="header">
+            <div>
+                <h1>模型价格对比</h1>
+                <p class="subtitle">实时获取各大 AI 提供商的模型价格与倍率</p>
+            </div>
+
+            <div class="actions-bar">
+                <a href="/" class="btn btn-secondary">← 返回监控</a>
+                <button id="refreshBtn" class="btn btn-primary" onclick="refreshPricing()">
+                    <span id="refreshIcon">↻</span> <span id="refreshText">刷新价格</span>
+                </button>
+            </div>
+        </header>
+
+        {{#manualRefresh}}
+        <div class="refresh-status" id="refreshInfo" data-limit="{{limit}}" data-reset="{{resetAt}}" style="margin-top: -3rem; margin-bottom: 3rem; text-align: left;">
+            今日剩余次数：<strong id="refreshRemaining">{{remaining}}</strong> / {{limit}}
+            <span style="color: #ccc; margin: 0 8px;">|</span>
+            重置时间：<span id="refreshReset">{{resetAtLocal}}</span>
+        </div>
+        {{/manualRefresh}}
+
+        {{#isLoading}}
+        <div class="loading-container">
+            <div class="spinner"></div>
+            <p>正在分析最新的价格数据...</p>
+        </div>
+        {{/isLoading}}
+
+        {{^isLoading}}
+        <div class="pricing-grid">
+            {{#providers}}
+            <div class="pricing-card">
+                <div class="card-header">
+                    <div class="provider-info">
+                        <div class="provider-icon-wrapper">
+                            {{{iconHtml}}}
+                        </div>
+                        <div class="provider-name">
+                            {{#pricingUrl}}
+                            <a href="{{pricingUrl}}" target="_blank" class="provider-link" title="前往 {{name}} 官网查看价格">
+                                {{name}}
+                            </a>
+                            {{/pricingUrl}}
+                            {{^pricingUrl}}
+                            {{name}}
+                            {{/pricingUrl}}
+                        </div>
+                    </div>
+
+                    <div class="header-actions">
+                        <button class="btn btn-secondary btn-xs" onclick="refreshProvider(event, '{{id}}')" title="刷新 {{name}} 的价格数据 (剩余 {{refreshStatus.remaining}}/{{refreshStatus.limit}} 次)">
+                            <span class="refresh-icon">↻</span> 刷新 ({{refreshStatus.remaining}})
+                        </button>
+
+                        <div class="dropdown">
+                            <button class="btn btn-secondary btn-xs" onclick="toggleDropdown(event, '{{name}}')">
+                                复制倍率 ▾
+                            </button>
+                            <div id="dropdown-{{name}}" class="dropdown-menu">
+                                <a href="#" class="dropdown-item" onclick="copyRatios(event, '{{name}}', 'model')">仅模型倍率</a>
+                                <a href="#" class="dropdown-item" onclick="copyRatios(event, '{{name}}', 'completion')">仅补全倍率</a>
+                                <a href="#" class="dropdown-item" onclick="copyRatios(event, '{{name}}', 'both')">全部复制</a>
+                            </div>
+                        </div>
+
+                        {{#error}}
+                            <span class="status-badge error">获取失败</span>
+                        {{/error}}
+                        {{^error}}
+                            <span class="status-badge success">已更新</span>
+                        {{/error}}
+                    </div>
+                </div>
+
+                {{#error}}
+                <div class="error-message">
+                    {{error}}
+                </div>
+                {{/error}}
+
+                {{^error}}
+                {{#models.length}}
+                <div class="table-responsive">
+                    <table class="pricing-table">
+                        <thead>
+                            <tr>
+                                <th style="width: 30%">模型名称</th>
+                                <th style="width: 20%">输入价格 ($/1M)</th>
+                                <th style="width: 20%">输出价格 ($/1M)</th>
+                                <th style="width: 15%">输入倍率</th>
+                                <th style="width: 15%">输出倍率</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {{#models}}
+                            <tr>
+                                <td class="model-cell">
+                                    {{{name}}}
+                                </td>
+                                <td class="price-cell">{{inputPrice}}</td>
+                                <td class="price-cell">{{outputPrice}}</td>
+                                <td><span class="ratio-cell">{{modelRatio}}</span></td>
+                                <td><span class="ratio-cell">{{completionRatio}}</span></td>
+                            </tr>
+                            {{/models}}
+                        </tbody>
+                    </table>
+                </div>
+                {{/models.length}}
+
+                {{^models.length}}
+                <div class="empty-state">
+                    暂无价格数据
+                </div>
+                {{/models.length}}
+
+                <div class="last-updated">
+                    最后更新: {{lastUpdated}}
+                </div>
+                {{/error}}
+            </div>
+            {{/providers}}
+
+            {{^providers}}
+            <div class="empty-state">
+                <h2>未找到数据</h2>
+                <p>请检查配置或稍后刷新。</p>
+            </div>
+            {{/providers}}
+        </div>
+        {{/isLoading}}
+
+        <footer class="footer">
+            <p>ModelSentry Pricing System &copy; 2026</p>
+        </footer>
+    </div>
+
+    <script>
+        // --- Logic synced with original implementation ---
+        const DEFAULT_REFRESH_LABEL = '刷新价格';
+
+        async function refreshProvider(event, providerId) {
+            const btn = event.target.closest('button');
+            if (!btn) return;
+
+            const originalText = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '<span class="refresh-icon">↻</span> 刷新中...';
+
+            try {
+                const response = await fetch(`/api/pricing/refresh/${providerId}`, { method: 'POST' });
+                let data = {};
+                try { data = await response.json(); } catch(e){}
+
+                if (data.manualRefresh) {
+                    updateRefreshStatus(data.manualRefresh);
+                    // Update the button text with new remaining count
+                    if (!response.ok || !data.success) {
+                        const remaining = data.manualRefresh.remaining;
+                        btn.innerHTML = `<span class="refresh-icon">↻</span> 刷新 (${remaining})`;
+                    }
+                }
+
+                if (response.ok && data.success) {
+                    showToast(`${providerId} 价格已更新`);
+                    // Update the card with new data
+                    if (data.data && data.data.length > 0) {
+                        setTimeout(() => window.location.reload(), 500);
+                    }
+                    return;
+                }
+
+                // Handle specific status codes
+                if (response.status === 202 || response.status === 429) {
+                    const msg = data.error || '操作受限';
+                    showToast(msg, response.status === 429 ? 'error' : 'normal');
+                } else {
+                    throw new Error(data.error || '刷新失败');
+                }
+            } catch (error) {
+                showToast(error.message, 'error');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = originalText;
+            }
+        }
+
+        async function refreshPricing() {
+            const refreshBtn = document.getElementById('refreshBtn');
+            const refreshText = document.getElementById('refreshText');
+            const refreshIcon = document.getElementById('refreshIcon');
+
+            if (!refreshBtn) return;
+
+            refreshBtn.disabled = true;
+            refreshIcon.style.display = 'none';
+            refreshText.textContent = '请求中...';
+
+            try {
+                const response = await fetch('/api/pricing/refresh', { method: 'POST' });
+                let data = {};
+                try { data = await response.json(); } catch(e){}
+
+                if (data.manualRefresh) {
+                    updateRefreshStatus(data.manualRefresh);
+                }
+
+                if (response.ok && data.success) {
+                    window.location.reload();
+                    return;
+                }
+
+                // Handle specific status codes
+                if (response.status === 202 || response.status === 429) {
+                    const msg = data.error || '操作受限';
+                    showToast(msg, response.status === 429 ? 'error' : 'normal');
+                } else {
+                    throw new Error(data.error || '刷新失败');
+                }
+            } catch (error) {
+                showToast(error.message, 'error');
+            } finally {
+                refreshBtn.disabled = false;
+                refreshIcon.style.display = 'inline';
+                refreshText.textContent = DEFAULT_REFRESH_LABEL;
+            }
+        }
+
+        function updateRefreshStatus(info) {
+            const remainingEl = document.getElementById('refreshRemaining');
+            const resetEl = document.getElementById('refreshReset');
+
+            if (remainingEl && info.remaining !== undefined) remainingEl.textContent = info.remaining;
+            if (resetEl && info.resetAtLocal) resetEl.textContent = info.resetAtLocal;
+        }
+
+        // Dropdown Logic
+        function toggleDropdown(event, id) {
+            event.stopPropagation();
+            closeAllDropdowns();
+            const el = document.getElementById('dropdown-' + id);
+            if (el) el.classList.toggle('show');
+        }
+
+        function closeAllDropdowns() {
+            document.querySelectorAll('.dropdown-menu').forEach(el => el.classList.remove('show'));
+        }
+
+        window.onclick = function(event) {
+            if (!event.target.closest('.dropdown')) {
+                closeAllDropdowns();
+            }
+        }
+
+        // Toast Logic
+        function showToast(message, type = 'normal') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.textContent = message;
+            container.appendChild(toast);
+
+            // Trigger reflow
+            void toast.offsetWidth;
+            toast.classList.add('show');
+
+            setTimeout(() => {
+                toast.classList.remove('show');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        // Copy Logic
+        async function copyRatios(event, providerName, type) {
+            event.preventDefault();
+            closeAllDropdowns();
+
+            const card = event.target.closest('.pricing-card');
+            const rows = card.querySelectorAll('tbody tr');
+
+            let modelRatios = {};
+            let completionRatios = {};
+            let hasData = false;
+
+            rows.forEach(row => {
+                // Parse clean text from HTML content (removing alias spans)
+                const nameCell = row.cells[0];
+                let modelName = nameCell.childNodes[0].textContent.trim();
+
+                // Fallback if structure is different
+                if (!modelName) modelName = nameCell.textContent.trim();
+
+                const mRatio = parseFloat(row.cells[3].textContent);
+                const cRatio = parseFloat(row.cells[4].textContent);
+
+                if (modelName && !isNaN(mRatio)) {
+                    modelRatios[modelName] = mRatio;
+                    hasData = true;
+                }
+                if (modelName && !isNaN(cRatio)) {
+                    completionRatios[modelName] = cRatio;
+                }
+            });
+
+            if (!hasData) {
+                showToast('无数据可复制', 'error');
+                return;
+            }
+
+            let text = '';
+            if (type === 'model' || type === 'both') {
+                text += `Model_ratio:\n${JSON.stringify(modelRatios, null, 2)}`;
+            }
+            if (type === 'both' && Object.keys(completionRatios).length) text += '\n\n';
+            if (type === 'completion' || type === 'both') {
+                if (Object.keys(completionRatios).length) {
+                    text += `completion_ratio:\n${JSON.stringify(completionRatios, null, 2)}`;
+                }
+            }
+
+            try {
+                await navigator.clipboard.writeText(text);
+                showToast('复制成功');
+            } catch (err) {
+                // Fallback
+                const ta = document.createElement('textarea');
+                ta.value = text;
+                document.body.appendChild(ta);
+                ta.select();
+                document.execCommand('copy');
+                document.body.removeChild(ta);
+                showToast('已复制到剪贴板');
+            }
+        }
+
+        // Auto refresh
+        setInterval(refreshPricing, 30 * 60 * 1000);
+    </script>
+</body>
+</html>

@@ -1,0 +1,91 @@
+{
+  "notifications": [
+    {
+      "id": "wechat",
+      "enabled": false,
+      "type": "generic_webhook",
+      "webhookUrlEnvVar": "WEWORK_BOT_KEY_CHANGES",
+      "triggerOn": ["added", "removed"],
+      "requestBodyTemplate": {
+        "msgtype": "markdown",
+        "markdown": {
+          "content": "**模型监控状态更新**\n> 服务商: {{providerName}} (`{{providerId}}`)\n\n**错误**:\n{{errorDetails}}\n**新增模型:**\n{{addedMarkdownList}}\n\n**移除模型:**\n{{removedMarkdownList}}"
+        }
+      }
+    },
+    {
+      "id": "lark",
+      "enabled": true,
+      "type": "generic_webhook",
+      "webhookUrlEnvVar": "LARK_BOT_WEBHOOK_URL",
+      "triggerOn": ["added", "removed", "error"],
+      "templateEnvVars": {
+        "detailPageUrl": "MODEL_SENTRY_DETAIL_URL"
+      },
+      "requestBodyTemplate": {
+        "msg_type": "interactive",
+        "card": {
+          "config": {
+            "wide_screen_mode": true
+          },
+          "header": {
+            "template": "wathet",
+            "title": {
+              "content": "🔔 ModelSentry 状态更新",
+              "tag": "plain_text"
+            }
+          },
+          "elements": [
+            {
+              "tag": "div",
+              "text": {
+                "content": "模型变动<at id=all></at>",
+                "tag": "lark_md"
+              }
+            },
+            {
+              "tag": "img",
+              "img_key": "img_v3_02ls_fcae9cd2-3bc1-468a-b910-00585e1bc9hu",
+              "alt": {
+                "tag": "plain_text",
+                "content": ""
+              },
+              "mode": "crop_center",
+              "preview": true,
+              "compact_width": false
+            },
+            {
+              "tag": "hr"
+            },
+            {
+              "tag": "markdown",
+              "content": "**模型提供商**: {{providerName}}\n\n❌ **错误信息**：\n{{errorDetails}}\n\n➕ **新增模型**：\n{{addedMarkdownList}}\n\n➖ **移除模型**：\n{{removedMarkdownList}}"
+            },
+            {
+              "tag": "hr"
+            },
+            {
+              "tag": "action",
+              "actions": [
+                {
+                  "tag": "button",
+                  "text": {
+                    "tag": "plain_text",
+                    "content": "查看详情"
+                  },
+                  "type": "primary",
+                  "multi_url": {
+                    "url": "{{detailPageUrl}}",
+                    "android_url": "{{detailPageUrl}}",
+                    "ios_url": "{{detailPageUrl}}",
+                    "pc_url": "{{detailPageUrl}}"
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

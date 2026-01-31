@@ -1,0 +1,22 @@
+{
+  "checkIntervalSeconds": 1800,
+  "cacheSettings": {
+    "backend": "file",
+    "filePath": "data/modelsentry-cache.json"
+  },
+  "frontendSettings": {
+    "title": "ModelSentry - AI 模型监控",
+    "faviconUrl": "/static/modelsentry.svg",
+    "backgroundImageUrl": "/static/background.jpg",
+    "backgroundOpacity": 0.7,
+    "modelCopySeparator": ","
+  },
+  "iconSettings": {
+    "enabled": true,
+    "cdnSource": "npmmirror",
+    "format": "svg",
+    "theme": "light",
+    "size": 32,
+    "fallbackIcon": "ai"
+  }
+}

@@ -1,0 +1,775 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{title}}</title>
+    <link rel="icon" href="{{faviconUrl}}" type="image/x-icon">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+        :root {
+            /* Color Palette - Retro Illustration */
+            --bg-color: #fef6e4;
+            --card-bg: #fffbf5; /* Slightly lighter than bg */
+            --text-primary: #001858;
+            --text-secondary: #172c66;
+            --text-tertiary: #6b7c93; /* Muted blue-grey */
+
+            /* Accent Colors */
+            --primary-color: #f582ae; /* Pink Button */
+            --primary-hover: #e86ba0;
+            --primary-light: rgba(245, 130, 174, 0.15);
+            --primary-text: #001858; /* Button text */
+
+            /* Secondary Accents */
+            --accent-cyan: #8bd3dd;
+            --accent-apricot: #f3d2c1;
+
+            /* Status Colors (Adapted to palette) */
+            --status-success-bg: #8bd3dd; /* Cyan for success/normal */
+            --status-success-text: #001858;
+            --status-error-bg: #f3d2c1; /* Apricot for attention/error */
+            --status-error-text: #5e1c1c;
+            --status-warning-bg: #fae1dd;
+            --status-warning-text: #5c2b29;
+            --status-neutral-bg: #e6e9f0;
+            --status-neutral-text: #172c66;
+
+            /* UI Elements */
+            --border-color: #f3d2c1; /* Use Apricot for borders */
+            --shadow-sm: 2px 2px 0px rgba(0, 24, 88, 0.1); /* Hard shadows for illustration feel */
+            --shadow-md: 4px 4px 0px rgba(0, 24, 88, 0.1);
+            --shadow-lg: 8px 8px 0px rgba(0, 24, 88, 0.1);
+
+            --radius-sm: 8px;
+            --radius-md: 12px;
+            --radius-lg: 16px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: var(--bg-color);
+            /* Subtle grain/noise texture could go here if supported, using solid for cleanliness */
+            background-image: radial-gradient(circle at 50% 0%, rgba(217, 119, 87, 0.05) 0%, transparent 60%);
+            min-height: 100vh;
+            color: var(--text-primary);
+            line-height: 1.6;
+            padding-bottom: 4rem;
+        }
+
+        .container {
+            max-width: 1400px; /* Wider layout */
+            margin: 0 auto;
+            padding: 4rem 2rem;
+        }
+
+        /* Header Section - Grand & Bold */
+        .header {
+            text-align: left; /* Magazine style alignment */
+            margin-bottom: 5rem;
+            position: relative;
+            padding-bottom: 2rem;
+            border-bottom: 2px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            flex-wrap: wrap;
+            gap: 2rem;
+        }
+
+        .header h1 {
+            font-size: 4rem; /* Huge title */
+            font-weight: 900;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+            letter-spacing: -0.04em;
+            line-height: 1;
+        }
+
+        .header-content {
+            flex: 1;
+        }
+
+        .status-info {
+            display: inline-flex;
+            gap: 2rem;
+            align-items: center;
+            background: transparent;
+            padding: 0;
+            border: none;
+            box-shadow: none;
+        }
+
+        .status-item {
+            font-size: 1.1rem;
+            color: var(--text-secondary);
+            font-weight: 500;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .status-item strong {
+            font-size: 1.8rem;
+            color: var(--text-primary);
+            font-weight: 800;
+            line-height: 1.2;
+        }
+
+        .separator { display: none; } /* Remove separator */
+
+        .pricing-link {
+            background-color: var(--primary-color);
+            color: var(--primary-text);
+            padding: 1rem 2rem;
+            border-radius: var(--radius-md);
+            font-weight: 700;
+            font-size: 1.1rem;
+            text-decoration: none;
+            box-shadow: var(--shadow-sm);
+            border: 2px solid var(--text-primary);
+            transition: transform 0.2s;
+            display: inline-block;
+        }
+
+        .pricing-link:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+            text-decoration: none;
+        }
+
+        /* Grid Layout - Optimized for 3-4 columns on large screens */
+        .providers-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 2rem;
+        }
+
+        /* Card Design - Refined & Elegant */
+        .provider-card {
+            background: var(--card-bg);
+            border-radius: var(--radius-lg);
+            border: 2px solid var(--border-color);
+            box-shadow: var(--shadow-sm);
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        .provider-card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-md);
+            border-color: var(--text-primary);
+        }
+
+        .card-content {
+            padding: 1.75rem; /* Balanced padding */
+        }
+
+        /* Provider Header */
+        .provider-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .provider-identity {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .provider-icon-wrapper {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #fff;
+            border: 2px solid var(--border-color);
+        }
+
+        .provider-icon-wrapper img, .provider-icon-wrapper svg {
+            width: 28px;
+            height: 28px;
+            object-fit: contain;
+        }
+
+        .provider-name {
+            font-size: 1.25rem;
+            font-weight: 800;
+            color: var(--text-primary);
+            letter-spacing: -0.01em;
+        }
+
+        /* Stats Section - Refined Proportions */
+        .stats-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            padding-bottom: 1.5rem;
+            margin-bottom: 1.5rem;
+            border-bottom: 1px dashed var(--border-color);
+        }
+
+        .stat-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .stat-value {
+            font-size: 2rem; /* Large but not overwhelming */
+            font-weight: 800;
+            color: var(--text-primary);
+            line-height: 1.1;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .stat-label {
+            font-size: 0.8rem;
+            color: var(--text-tertiary);
+            font-weight: 600;
+            margin-top: 0.25rem;
+        }
+
+        .stat-value.success {
+            color: var(--status-success-text);
+        }
+
+        .stat-value.inactive {
+            color: var(--text-tertiary);
+        }
+
+        /* Details & Error */
+        .meta-info {
+            font-size: 0.8rem;
+            color: var(--text-tertiary);
+            display: flex;
+            flex-direction: column;
+            gap: 0.4rem;
+        }
+
+        .error-box {
+            background-color: var(--status-error-bg);
+            color: var(--status-error-text);
+            padding: 1rem;
+            border-radius: var(--radius-sm);
+            font-size: 0.85rem;
+            margin-top: 1rem;
+            line-height: 1.5;
+        }
+
+        .error-box code {
+            display: inline-block;
+            background: rgba(255,255,255,0.5);
+            padding: 0 4px;
+            border-radius: 4px;
+            font-family: monospace;
+            margin-top: 4px;
+        }
+
+        /* Models Section */
+        .models-section {
+            background-color: #fbfbfb;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .models-toggle {
+            width: 100%;
+            padding: 1rem 2rem;
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            transition: all 0.2s;
+        }
+
+        .models-toggle:hover {
+            color: var(--text-primary);
+            background-color: #f5f5f5;
+        }
+
+        .arrow {
+            transition: transform 0.3s ease;
+            font-size: 0.8rem;
+            opacity: 0.6;
+        }
+
+        .models-toggle.expanded .arrow {
+            transform: rotate(180deg);
+        }
+
+        .models-panel {
+            display: none;
+            padding: 0 2rem 2rem 2rem;
+        }
+
+        .models-panel.expanded {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .models-actions {
+            display: flex;
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+        }
+
+        .action-btn {
+            padding: 0.4rem 0.8rem;
+            border-radius: 6px;
+            border: 1px solid var(--border-color);
+            background: white;
+            color: var(--text-secondary);
+            font-size: 0.8rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .action-btn:hover {
+            border-color: var(--text-secondary);
+            color: var(--text-primary);
+        }
+
+        .action-btn.active {
+            background-color: var(--primary-light);
+            border-color: var(--primary-color);
+            color: var(--primary-color);
+        }
+
+        .action-btn.primary {
+            background-color: var(--primary-color);
+            color: var(--primary-text);
+            border-color: var(--primary-color);
+            font-weight: 600;
+        }
+
+        .action-btn.primary:hover {
+            background-color: var(--primary-hover);
+            border-color: var(--primary-hover);
+        }
+
+        .models-list {
+            max-height: 240px;
+            overflow-y: auto;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-sm);
+            background: white;
+        }
+
+        .model-row {
+            display: flex;
+            align-items: center;
+            padding: 0.6rem 0.8rem;
+            border-bottom: 1px solid #f0f0f0;
+            transition: background 0.15s;
+            gap: 0.75rem;
+        }
+
+        .model-row:last-child {
+            border-bottom: none;
+        }
+
+        .model-row:hover {
+            background-color: #f8f9fa;
+        }
+
+        .model-row.new {
+            background-color: rgba(34, 197, 94, 0.05);
+            border-left: 3px solid #22c55e;
+        }
+
+        .model-checkbox {
+            accent-color: var(--primary-color);
+            width: 16px;
+            height: 16px;
+            cursor: pointer;
+        }
+
+        .model-name {
+            font-size: 0.85rem;
+            color: var(--text-primary);
+            cursor: pointer;
+            flex: 1;
+            word-break: break-all;
+            font-family: 'SF Mono', 'Monaco', 'Inconsolata', monospace;
+        }
+
+        .new-badge {
+            font-size: 0.65rem;
+            background-color: #22c55e;
+            color: white;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: 600;
+            margin-left: 8px;
+        }
+
+        /* Status Badges */
+        .status-badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 99px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .status-badge.success {
+            background-color: #dcfce7;
+            color: #166534;
+            border: 1px solid #bbf7d0;
+        }
+
+        .status-badge.error {
+            background-color: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #fecaca;
+        }
+
+        .status-badge.warning {
+            background-color: var(--status-warning-bg);
+            color: var(--status-warning-text);
+            border: 1px solid var(--border-color);
+        }
+
+        .status-badge.neutral {
+            background-color: var(--status-neutral-bg);
+            color: var(--status-neutral-text);
+            border: 1px solid #d1d5db;
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            margin-top: 4rem;
+            color: var(--text-tertiary);
+            font-size: 0.9rem;
+        }
+
+        /* Responsive */
+        @media (max-width: 640px) {
+            .header h1 {
+                font-size: 2rem;
+            }
+            .status-info {
+                flex-direction: column;
+                border-radius: var(--radius-lg);
+                padding: 1.5rem;
+                width: 100%;
+                gap: 0.75rem;
+            }
+            .separator { display: none; }
+            .pricing-link { margin-top: 0.5rem; }
+            .card-content { padding: 1.5rem; }
+            .providers-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <div class="header-content">
+                <h1>{{title}}</h1>
+                <div class="status-info">
+                    <div class="status-item">
+                        <span>总提供商</span>
+                        <strong>{{totalProviders}}</strong>
+                    </div>
+                    <div class="status-item">
+                        <span>已启用</span>
+                        <strong>{{enabledProviders}}</strong>
+                    </div>
+                </div>
+            </div>
+
+            <a href="/pricing" class="pricing-link">
+                查看模型价格 &rarr;
+            </a>
+        </header>
+
+        <main class="providers-grid">
+            {{#providers}}
+            <div class="provider-card">
+                <div class="card-content">
+                    <div class="provider-header">
+                        <div class="provider-identity">
+                            <div class="provider-icon-wrapper">
+                                {{#iconHtml}}{{{iconHtml}}}{{/iconHtml}}
+                            </div>
+                            <div class="provider-name">{{name}}</div>
+                        </div>
+
+                        <!-- Status Logic -->
+                        {{#enabled}}
+                            {{#isRetrying}}
+                                <span class="status-badge warning">Retrying</span>
+                            {{/isRetrying}}
+                            {{^isRetrying}}
+                                {{#error}}
+                                    <span class="status-badge error">Abnormal</span>
+                                {{/error}}
+                                {{^error}}
+                                    <span class="status-badge success">Activity</span>
+                                {{/error}}
+                            {{/isRetrying}}
+                        {{/enabled}}
+                        {{^enabled}}
+                            {{#isMissingKey}}
+                                <span class="status-badge warning">Missing Key</span>
+                            {{/isMissingKey}}
+                            {{^isMissingKey}}
+                                <span class="status-badge neutral">Disabled</span>
+                            {{/isMissingKey}}
+                        {{/enabled}}
+                    </div>
+
+                    <div class="stats-row">
+                        <div class="stat-group">
+                            <div class="stat-value">{{modelCount}}</div>
+                            <div class="stat-label">模型数量</div>
+                        </div>
+                        <div class="stat-group">
+                            <div class="stat-value {{#lastSuccess}}success{{/lastSuccess}}{{^lastSuccess}}inactive{{/lastSuccess}}">
+                                {{#lastSuccess}}✓{{/lastSuccess}}{{^lastSuccess}}-{{/lastSuccess}}
+                            </div>
+                            <div class="stat-label">状态检查</div>
+                        </div>
+                    </div>
+
+                    <div class="meta-info">
+                        {{#lastCheck}}
+                            <span>检查时间: {{lastCheck}}</span>
+                        {{/lastCheck}}
+                        {{#nextRetryAt}}
+                            <span style="color: var(--status-warning-text)">下次重试: {{nextRetryAt}}</span>
+                        {{/nextRetryAt}}
+                    </div>
+
+                    {{#error}}
+                    <div class="error-box">
+                        {{#isMissingKey}}
+                            <strong>配置缺失</strong><br>
+                            请设置环境变量: <code>{{requiredEnvVar}}</code>
+                        {{/isMissingKey}}
+                        {{^isMissingKey}}
+                            {{error}}
+                        {{/isMissingKey}}
+                    </div>
+                    {{/error}}
+                </div>
+
+                {{#enabled}}
+                <div class="models-section">
+                    {{#modelCount}}
+                    <button class="models-toggle" onclick="toggleModels('{{id}}')">
+                        <span>查看模型列表</span>
+                        <span class="arrow">▼</span>
+                    </button>
+                    <div class="models-panel" id="models-{{id}}">
+                        <div class="models-actions">
+                            <button id="toggle-{{id}}" class="action-btn" onclick="toggleAllModels('{{id}}')">全选</button>
+                            <button class="action-btn primary" onclick="copySelectedModels('{{id}}')">复制选中</button>
+                        </div>
+                        <div class="models-list" id="list-{{id}}">
+                            {{#models}}
+                            <div class="model-row {{#isNew}}new{{/isNew}}">
+                                <input type="checkbox" class="model-checkbox" id="model-{{id}}-{{name}}" data-provider="{{id}}" data-model="{{name}}">
+                                <label for="model-{{id}}-{{name}}" class="model-name">
+                                    {{name}}
+                                    {{#isNew}}<span class="new-badge">NEW</span>{{/isNew}}
+                                </label>
+                            </div>
+                            {{/models}}
+                        </div>
+                    </div>
+                    {{/modelCount}}
+                    {{^modelCount}}
+                    <div style="padding: 1.5rem; text-align: center; color: var(--text-tertiary); font-size: 0.9rem;">
+                        暂无可用模型
+                    </div>
+                    {{/modelCount}}
+                </div>
+                {{/enabled}}
+            </div>
+            {{/providers}}
+        </main>
+
+        <footer class="footer">
+            <p>ModelSentry &copy; 2026 - AI Model Monitoring System</p>
+        </footer>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" style="visibility: hidden; min-width: 250px; background-color: #333; color: #fff; text-align: center; border-radius: 8px; padding: 16px; position: fixed; z-index: 9999; left: 50%; bottom: 30px; transform: translateX(-50%); font-size: 14px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);"></div>
+
+    <script>
+        // Simple Toast Function
+        function showToast(message) {
+            var x = document.getElementById("toast");
+            x.textContent = message;
+            x.style.visibility = "visible";
+            x.style.animation = "fadein 0.5s, fadeout 0.5s 2.5s";
+            setTimeout(function(){ x.style.visibility = "hidden"; }, 3000);
+        }
+
+        // Logic for Models UI
+        document.addEventListener('DOMContentLoaded', () => {
+            // Sort models alphabetically
+            document.querySelectorAll('.models-list').forEach(container => {
+                const rows = Array.from(container.querySelectorAll('.model-row'));
+                rows.sort((a, b) => {
+                    const nameA = a.querySelector('.model-name').textContent.trim().toLowerCase();
+                    const nameB = b.querySelector('.model-name').textContent.trim().toLowerCase();
+                    return nameA.localeCompare(nameB);
+                });
+                rows.forEach(row => container.appendChild(row));
+            });
+
+            // Add change listener to update 'Select All' button state
+            document.addEventListener('change', function(e) {
+                if (e.target.classList.contains('model-checkbox')) {
+                    const providerId = e.target.dataset.provider;
+                    updateToggleButtonText(providerId);
+                }
+            });
+        });
+
+        function toggleModels(providerId) {
+            const panel = document.getElementById(`models-${providerId}`);
+            const btn = document.querySelector(`button[onclick="toggleModels('${providerId}')"]`);
+            if (panel.classList.contains('expanded')) {
+                panel.classList.remove('expanded');
+                btn.classList.remove('expanded');
+            } else {
+                panel.classList.add('expanded');
+                btn.classList.add('expanded');
+            }
+        }
+
+        function toggleAllModels(providerId) {
+            const container = document.getElementById(`list-${providerId}`);
+            const checkboxes = container.querySelectorAll('.model-checkbox');
+            const toggleBtn = document.getElementById(`toggle-${providerId}`);
+
+            // Determine state: if some are unchecked, check all. If all checked, uncheck all.
+            const allChecked = Array.from(checkboxes).every(cb => cb.checked);
+
+            checkboxes.forEach(cb => cb.checked = !allChecked);
+            updateToggleButtonText(providerId);
+        }
+
+        function updateToggleButtonText(providerId) {
+            const container = document.getElementById(`list-${providerId}`);
+            const toggleBtn = document.getElementById(`toggle-${providerId}`);
+            const checkboxes = container.querySelectorAll('.model-checkbox');
+            const checkedCount = Array.from(checkboxes).filter(cb => cb.checked).length;
+
+            if (checkedCount === 0) {
+                toggleBtn.textContent = '全选';
+                toggleBtn.classList.remove('active');
+            } else if (checkedCount === checkboxes.length) {
+                toggleBtn.textContent = '取消全选';
+                toggleBtn.classList.add('active');
+            } else {
+                toggleBtn.textContent = `已选 (${checkedCount})`;
+                toggleBtn.classList.add('active');
+            }
+        }
+
+        function copySelectedModels(providerId) {
+            try {
+                const container = document.getElementById(`list-${providerId}`);
+                if (!container) {
+                    console.error('List container not found for provider:', providerId);
+                    showToast('错误：找不到模型列表');
+                    return;
+                }
+
+                const selected = Array.from(container.querySelectorAll('.model-checkbox:checked'))
+                                      .map(cb => cb.dataset.model);
+
+                if (selected.length === 0) {
+                    showToast('请先选择要复制的模型');
+                    return;
+                }
+
+                const separator = '{{modelCopySeparator}}' || ',';
+                const text = selected.join(separator);
+
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    navigator.clipboard.writeText(text).then(() => {
+                        showToast(`已复制 ${selected.length} 个模型名称`);
+                    }).catch(err => {
+                        console.error('Clipboard API failed:', err);
+                        fallbackCopy(text, selected.length);
+                    });
+                } else {
+                    fallbackCopy(text, selected.length);
+                }
+            } catch (error) {
+                console.error('Copy failed:', error);
+                showToast('复制失败，请查看控制台');
+            }
+        }
+
+        function fallbackCopy(text, count) {
+            try {
+                const ta = document.createElement('textarea');
+                ta.value = text;
+                ta.style.position = 'fixed'; // Avoid scrolling to bottom
+                ta.style.top = '0';
+                ta.style.left = '0';
+                ta.style.opacity = '0'; // Invisible
+                document.body.appendChild(ta);
+                ta.focus();
+                ta.select();
+                const successful = document.execCommand('copy');
+                document.body.removeChild(ta);
+
+                if (successful) {
+                    showToast(`已复制 ${count} 个模型名称`);
+                } else {
+                    showToast('复制失败 (Fallback)');
+                }
+            } catch (err) {
+                console.error('Fallback copy failed:', err);
+                showToast('复制失败');
+            }
+        }
+    </script>
+    <style>
+        /* Animation for Toast */
+        @keyframes fadein {
+            from {bottom: 0; opacity: 0;}
+            to {bottom: 30px; opacity: 1;}
+        }
+        @keyframes fadeout {
+            from {bottom: 30px; opacity: 1;}
+            to {bottom: 0; opacity: 0;}
+        }
+    </style>
+</body>
+</html>

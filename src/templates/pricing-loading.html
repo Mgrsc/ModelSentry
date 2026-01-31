@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>正在获取价格...</title>
+    <link rel="icon" href="{{faviconUrl}}" type="image/x-icon">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #3b82f6;
+            --text-primary: #1f2937;
+            --text-secondary: #6b7280;
+            --bg-primary: #ffffff;
+            --border-color: #e5e7eb;
+            --backgroundOpacity: {{backgroundOpacity}};
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--backgroundCss);
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            color: var(--text-primary);
+        }
+        .overlay {
+            background: linear-gradient(135deg, rgba(255, 255, 255, var(--backgroundOpacity)) 0%, rgba(248, 250, 252, var(--backgroundOpacity)) 100%);
+            min-height: 100vh;
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(15px) saturate(180%);
+        }
+        .container {
+            text-align: center;
+            padding: 2rem;
+            background: var(--bg-primary);
+            border-radius: 1rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            border: 1px solid var(--border-color);
+        }
+        h1 {
+            font-size: 1.8rem;
+            margin-bottom: 1rem;
+        }
+        p {
+            color: var(--text-secondary);
+            margin-bottom: 2rem;
+        }
+        .loading-spinner {
+            display: inline-block;
+            width: 3rem;
+            height: 3rem;
+            border: 4px solid var(--border-color);
+            border-radius: 50%;
+            border-top-color: var(--primary-color);
+            animation: spin 1s ease-in-out infinite;
+            margin-bottom: 1rem;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        .nav-button {
+            padding: 0.75rem 1.5rem;
+            background: var(--bg-primary);
+            border: 2px solid var(--border-color);
+            border-radius: 0.75rem;
+            color: var(--text-primary);
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+        .nav-button:hover {
+            background: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+    </style>
+</head>
+<body class="{{backgroundClass}}">
+    <div class="overlay">
+        <div class="container">
+            <div class="loading-spinner"></div>
+            <h1>正在准备价格数据...</h1>
+            <p>首次启动时，我们需要一些时间从各大提供商获取最新的价格信息。请稍候，页面将在准备就绪后自动刷新。</p>
+            <a href="/" class="nav-button">← 返回主页</a>
+        </div>
+    </div>
+    <script>
+        const checkInterval = setInterval(async () => {
+            try {
+                const response = await fetch('/api/pricing');
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.length > 0) {
+                        clearInterval(checkInterval);
+                        window.location.reload();
+                    }
+                }
+            } catch (error) {
+                console.error('Polling for pricing data failed:', error);
+            }
+        }, 10000);
+    </script>
+</body>
+</html>

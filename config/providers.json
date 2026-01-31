@@ -1,0 +1,196 @@
+{
+  "providers": [
+    {
+      "id": "openai",
+      "name": "OpenAI",
+      "enabled": true,
+      "url": "https://api.openai.com/v1/models",
+      "method": "GET",
+      "auth": {
+        "type": "header",
+        "headerName": "Authorization",
+        "valuePrefix": "Bearer ",
+        "apiKeyEnvVar": "OPENAI_API_KEY"
+      },
+      "parsing": {
+        "modelListPath": "data",
+        "modelNamePath": "id"
+      }
+    },
+    {
+      "id": "claude",
+      "name": "Anthropic Claude",
+      "enabled": true,
+      "url": "https://api.anthropic.com/v1/models",
+      "method": "GET",
+      "auth": {
+        "type": "custom_headers",
+        "apiKeyEnvVar": "CLAUDE_API_KEY",
+        "customHeaders": {
+          "x-api-key": {
+            "envVar": "CLAUDE_API_KEY"
+          },
+          "anthropic-version": {
+            "value": "2023-06-01"
+          }
+        }
+      },
+      "parsing": {
+        "modelListPath": "data",
+        "modelNamePath": "id"
+      }
+    },
+    {
+      "id": "gemini",
+      "name": "Google Gemini",
+      "enabled": true,
+      "url": "https://generativelanguage.googleapis.com/v1beta/models",
+      "method": "GET",
+      "auth": {
+        "type": "query",
+        "keyParamName": "key",
+        "apiKeyEnvVar": "GEMINI_API_KEY"
+      },
+      "parsing": {
+        "modelListPath": "models",
+        "modelNamePath": "name",
+        "modelNameRegex": "^models/(.+)$"
+      }
+    },
+    {
+      "id": "moonshot",
+      "name": "Moonshot (Kimi)",
+      "enabled": true,
+      "url": "https://api.moonshot.cn/v1/models",
+      "method": "GET",
+      "auth": {
+        "type": "header",
+        "headerName": "Authorization",
+        "valuePrefix": "Bearer ",
+        "apiKeyEnvVar": "KIMI_API_KEY"
+      },
+      "parsing": {
+        "modelListPath": "data",
+        "modelNamePath": "id"
+      }
+    },
+    {
+      "id": "mistral",
+      "name": "Mistral",
+      "enabled": true,
+      "url": "https://api.mistral.ai/v1/models",
+      "method": "GET",
+      "auth": {
+        "type": "header",
+        "headerName": "Authorization",
+        "valuePrefix": "Bearer ",
+        "apiKeyEnvVar": "MISTRAL_API_KEY"
+      },
+      "parsing": {
+        "modelListPath": "data",
+        "modelNamePath": "id"
+      }
+    },
+    {
+      "id": "xai",
+      "name": "XAI (Grok)",
+      "enabled": true,
+      "url": "https://api.x.ai/v1/models",
+      "method": "GET",
+      "auth": {
+        "type": "header",
+        "headerName": "Authorization",
+        "valuePrefix": "Bearer ",
+        "apiKeyEnvVar": "XAI_API_KEY"
+      },
+      "parsing": {
+        "modelListPath": "data",
+        "modelNamePath": "id"
+      }
+    },
+    {
+      "id": "groq",
+      "name": "GroqCloud",
+      "enabled": true,
+      "url": "https://api.groq.com/openai/v1/models",
+      "method": "GET",
+      "auth": {
+        "type": "header",
+        "headerName": "Authorization",
+        "valuePrefix": "Bearer ",
+        "apiKeyEnvVar": "GROQ_API_KEY"
+      },
+      "parsing": {
+        "modelListPath": "data",
+        "modelNamePath": "id"
+      }
+    },
+    {
+      "id": "siliconflow",
+      "name": "Siliconflow",
+      "enabled": true,
+      "url": "https://api.siliconflow.cn/v1/models",
+      "method": "GET",
+      "auth": {
+        "type": "header",
+        "headerName": "Authorization",
+        "valuePrefix": "Bearer ",
+        "apiKeyEnvVar": "SILICONFLOW_API_KEY"
+      },
+      "parsing": {
+        "modelListPath": "data",
+        "modelNamePath": "id"
+      }
+    },
+    {
+      "id": "stepfun",
+      "name": "StepFun",
+      "enabled": true,
+      "url": "https://api.stepfun.com/v1/models",
+      "method": "GET",
+      "auth": {
+        "type": "header",
+        "headerName": "Authorization",
+        "valuePrefix": "Bearer ",
+        "apiKeyEnvVar": "STEPFUN_API_KEY"
+      },
+      "parsing": {
+        "modelListPath": "data",
+        "modelNamePath": "id"
+      }
+    },
+    {
+      "id": "together",
+      "name": "Together AI",
+      "enabled": true,
+      "url": "https://api.together.xyz/v1/models",
+      "method": "GET",
+      "auth": {
+        "type": "header",
+        "headerName": "Authorization",
+        "valuePrefix": "Bearer ",
+        "apiKeyEnvVar": "TOGETHER_API_KEY"
+      },
+      "parsing": {
+        "modelNamePath": "id"
+      }
+    },
+    {
+      "id": "cerebras",
+      "name": "Cerebras",
+      "enabled": true,
+      "url": "https://api.cerebras.ai/v1/models",
+      "method": "GET",
+      "auth": {
+        "type": "header",
+        "headerName": "Authorization",
+        "valuePrefix": "Bearer ",
+        "apiKeyEnvVar": "CEREBRAS_API_KEY"
+      },
+      "parsing": {
+        "modelListPath": "data",
+        "modelNamePath": "id"
+      }
+    }
+  ]
+}

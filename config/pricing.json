@@ -1,0 +1,34 @@
+{
+  "pricingSettings": {
+    "enabled": true,
+    "jinaApiKeyEnvVar": "JINA_API_KEY",
+    "llmApiKeyEnvVar": "LLM_API_KEY",
+    "llmBaseUrlEnvVar": "LLM_BASE_URL",
+    "llmModelEnvVar": "LLM_MODEL",
+    "retryAttempts": 2,
+    "retryIntervalMinutes": 1,
+    "requestTimeoutSeconds": 120,
+    "providers": [
+      {
+        "id": "openai",
+        "name": "OpenAI",
+        "pricingUrl": "https://platform.openai.com/docs/pricing"
+      },
+      {
+        "id": "claude",
+        "name": "Claude",
+        "pricingUrl": "https://platform.claude.com/docs/en/about-claude/pricing"
+      },
+      {
+        "id": "gemini",
+        "name": "Gemini",
+        "pricingUrl": "https://ai.google.dev/gemini-api/docs/pricing"
+      },
+      {
+        "id": "xai",
+        "name": "X.AI",
+        "pricingUrl": "https://docs.x.ai/docs/models"
+      }
+    ]
+  }
+}
