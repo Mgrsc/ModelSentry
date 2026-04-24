@@ -12,18 +12,17 @@ interface LlmResponse {
 }
 
 interface RawPricingModel {
+  provider?: unknown;
   model_name?: unknown;
   name?: unknown;
+  input_price_details?: unknown;
+  inputPriceDetails?: unknown;
+  cache_hit_price?: unknown;
+  cacheHitPrice?: unknown;
   input_price?: unknown;
   inputPrice?: unknown;
   output_price?: unknown;
   outputPrice?: unknown;
-}
-
-interface PriceInput {
-  model_name: string;
-  input_price: number;
-  output_price: number;
 }
 
 export class PricingLlmExtractor {
@@ -106,10 +105,11 @@ export class PricingLlmExtractor {
 Webpage content:
 ${content}
 
-Extract pricing information for each model. From the content, find the input price and output price per million tokens.
-Return the result as a JSON object with a "models" key, which is an array of objects.
-Each object in the array should have the following keys: "model_name" (string), "input_price" (number), "output_price" (number).
-Example: {"models": [{"model_name": "gpt-4o", "input_price": 5.0, "output_price": 15.0}]}`;
+Extract pricing information for each model. Return a JSON object with a "models" array.
+Each model object must include "provider", "model_name", "input_price_details", "cache_hit_price", and "output_price".
+Use strings with the original billing unit converted to per million tokens when applicable.
+If a field has multiple prices, join them with ", " and include a short label in parentheses for each price.
+Example: {"models":[{"provider":"OpenAI","model_name":"gpt-5.4","input_price_details":"$2.50 / 1M (Short context Input), $5.00 / 1M (Long context Input)","cache_hit_price":"$0.25 / 1M (Short context Cached Input), $0.50 / 1M (Long context Cached Input)","output_price":"$15.00 / 1M (Short context Output), $22.50 / 1M (Long context Output)"}]}`;
 
         log.debug('Sending request to LLM', {
           providerName,
@@ -197,11 +197,11 @@ Example: {"models": [{"model_name": "gpt-4o", "input_price": 5.0, "output_price"
         throw new Error('Invalid JSON structure: expected object with "models" array');
       }
 
-      const priceInputs = jsonData.models
-        .map((model) => this.toPriceInput(model))
-        .filter((model): model is PriceInput => model !== null);
+      const models = jsonData.models
+        .map((model) => this.toModelPricing(model))
+        .filter((model): model is ModelPricing => model !== null);
 
-      if (priceInputs.length === 0) {
+      if (models.length === 0) {
         log.warn('No valid models with prices found in LLM response', {
           providerName,
           rawModelsCount: jsonData.models.length,
@@ -214,11 +214,9 @@ Example: {"models": [{"model_name": "gpt-4o", "input_price": 5.0, "output_price"
       log.debug('Parsed and validated pricing models', {
         providerName,
         totalFound: jsonData.models.length,
-        validModels: priceInputs.length,
-        modelNames: priceInputs.map((model) => model.model_name).join(', ')
+        validModels: models.length,
+        modelNames: models.map((model) => model.name.replace(/<[^>]*>/g, '')).join(', ')
       });
-
-      const models = priceInputs.map((input) => this.toModelPricing(input));
 
       log.debug('Parsed pricing models', {
         providerName,
@@ -243,41 +241,105 @@ Example: {"models": [{"model_name": "gpt-4o", "input_price": 5.0, "output_price"
     }
   }
 
-  private toPriceInput(model: RawPricingModel): PriceInput | null {
+  private toModelPricing(model: RawPricingModel): ModelPricing | null {
     const modelName = typeof model.model_name === 'string'
       ? model.model_name
       : typeof model.name === 'string'
         ? model.name
         : null;
-    const inputPrice = parsePrice(model.input_price ?? model.inputPrice);
-    const outputPrice = parsePrice(model.output_price ?? model.outputPrice);
 
-    if (!modelName || inputPrice === null || outputPrice === null || inputPrice < 0 || outputPrice < 0) {
+    if (!modelName) {
+      return null;
+    }
+
+    const detailedPricing = this.toDetailedModelPricing(model, modelName);
+    if (detailedPricing) return detailedPricing;
+
+    return this.toLegacyModelPricing(model, modelName);
+  }
+
+  private toDetailedModelPricing(model: RawPricingModel, modelName: string): ModelPricing | null {
+    const inputPriceDetails = this.toDisplayText(model.input_price_details ?? model.inputPriceDetails);
+    const outputPrice = this.toDisplayText(model.output_price ?? model.outputPrice);
+
+    if (!inputPriceDetails || !outputPrice) {
+      return null;
+    }
+
+    const inputPriceLines = this.toDisplayLines(inputPriceDetails);
+    const cacheHitPriceLines = this.toDisplayLines(this.toDisplayText(model.cache_hit_price ?? model.cacheHitPrice) || 'N/A');
+    const outputPriceLines = this.toDisplayLines(outputPrice);
+
+    if (!inputPriceLines.length || !outputPriceLines.length) {
       return null;
     }
 
     return {
-      model_name: modelName,
-      input_price: inputPrice,
-      output_price: outputPrice
+      name: this.toModelNameHtml(modelName),
+      inputPrice: inputPriceLines[0].text,
+      inputPriceLines,
+      cacheHitPrice: cacheHitPriceLines[0].text,
+      cacheHitPriceLines,
+      outputPrice: outputPriceLines[0].text,
+      outputPriceLines
     };
   }
 
-  private toModelPricing(input: PriceInput): ModelPricing {
-    const nameParts = input.model_name.split('<->');
-    const modelNameHtml = nameParts.length > 1
-      ? `${nameParts[0].trim()}<span class="model-alias">↳ ${nameParts.slice(1).map((name) => name.trim()).join(', ')}</span>`
-      : input.model_name;
+  private toLegacyModelPricing(model: RawPricingModel, modelName: string): ModelPricing | null {
+    const inputPrice = parsePrice(model.input_price ?? model.inputPrice);
+    const outputPrice = parsePrice(model.output_price ?? model.outputPrice);
+
+    if (inputPrice === null || outputPrice === null || inputPrice < 0 || outputPrice < 0) {
+      return null;
+    }
 
     return {
-      name: modelNameHtml,
-      inputPrice: formatPrice(input.input_price),
-      outputPrice: formatPrice(input.output_price),
+      name: this.toModelNameHtml(modelName),
+      inputPrice: formatPrice(inputPrice),
+      outputPrice: formatPrice(outputPrice)
     };
+  }
+
+  private toDisplayText(value: unknown): string | null {
+    if (typeof value === 'number') {
+      if (value < 0) return null;
+      return formatPrice(value);
+    }
+    if (typeof value === 'string') {
+      const trimmed = value.trim();
+      return trimmed || null;
+    }
+    return null;
+  }
+
+  private toDisplayLines(value: string): Array<{ text: string }> {
+    return value
+      .split(',')
+      .map((line) => line.trim())
+      .filter(Boolean)
+      .map((text) => ({ text }));
+  }
+
+  private toModelNameHtml(modelName: string): string {
+    const nameParts = modelName.split('<->');
+    const modelNameHtml = nameParts.length > 1
+      ? `${escapeHtml(nameParts[0].trim())}<span class="model-alias">↳ ${nameParts.slice(1).map((name) => escapeHtml(name.trim())).join(', ')}</span>`
+      : escapeHtml(modelName);
+
+    return modelNameHtml;
   }
 
   private getLlmRetryDelay(attempt: number): number {
     const baseDelay = 1000;
     return Math.min(5000, baseDelay * Math.pow(2, attempt - 1));
   }
+}
+
+function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
 }

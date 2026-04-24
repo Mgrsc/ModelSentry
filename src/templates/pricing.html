@@ -296,6 +296,10 @@
             font-variant-numeric: tabular-nums;
         }
 
+        .price-line + .price-line {
+            margin-top: 0.35rem;
+        }
+
         .empty-state {
             padding: 3rem;
             text-align: center;
@@ -448,9 +452,10 @@
                     <table class="pricing-table">
                         <thead>
                             <tr>
-                                <th style="width: 50%">模型名称</th>
-                                <th style="width: 25%">输入价格 ($/1M)</th>
-                                <th style="width: 25%">输出价格 ($/1M)</th>
+                                <th style="width: 34%">模型名称</th>
+                                <th style="width: 30%">输入价格</th>
+                                <th style="width: 20%">缓存价格</th>
+                                <th style="width: 16%">输出价格</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -459,8 +464,30 @@
                                 <td class="model-cell">
                                     {{{name}}}
                                 </td>
-                                <td class="price-cell">{{inputPrice}}</td>
-                                <td class="price-cell">{{outputPrice}}</td>
+                                <td class="price-cell">
+                                    {{#inputPriceLines}}
+                                    <div class="price-line">{{text}}</div>
+                                    {{/inputPriceLines}}
+                                    {{^inputPriceLines}}
+                                    {{inputPrice}}
+                                    {{/inputPriceLines}}
+                                </td>
+                                <td class="price-cell">
+                                    {{#cacheHitPriceLines}}
+                                    <div class="price-line">{{text}}</div>
+                                    {{/cacheHitPriceLines}}
+                                    {{^cacheHitPriceLines}}
+                                    {{#cacheHitPrice}}{{cacheHitPrice}}{{/cacheHitPrice}}{{^cacheHitPrice}}N/A{{/cacheHitPrice}}
+                                    {{/cacheHitPriceLines}}
+                                </td>
+                                <td class="price-cell">
+                                    {{#outputPriceLines}}
+                                    <div class="price-line">{{text}}</div>
+                                    {{/outputPriceLines}}
+                                    {{^outputPriceLines}}
+                                    {{outputPrice}}
+                                    {{/outputPriceLines}}
+                                </td>
                             </tr>
                             {{/models}}
                         </tbody>

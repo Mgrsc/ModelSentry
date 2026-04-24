@@ -7,7 +7,11 @@ import { PricingLlmExtractor } from './pricing-llm-extractor.ts';
 export interface ModelPricing {
   name: string;
   inputPrice?: string;
+  inputPriceLines?: Array<{ text: string }>;
+  cacheHitPrice?: string;
+  cacheHitPriceLines?: Array<{ text: string }>;
   outputPrice?: string;
+  outputPriceLines?: Array<{ text: string }>;
 }
 
 export interface ProviderPricing {
