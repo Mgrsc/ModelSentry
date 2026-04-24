@@ -37,19 +37,11 @@ export function getContentType(filePath: string): string {
   return types[ext || ''] || 'application/octet-stream';
 }
 
-export function round(value: number, places: number): number {
-  if (isNaN(value) || !isFinite(value)) {
-    return value;
-  }
-  const power = Math.pow(10, places);
-  return Math.round(value * power) / power;
-}
-
 export function formatPrice(price: number): string {
   return `$${price.toFixed(2)}`;
 }
 
-export function parsePrice(price: any): number | null {
+export function parsePrice(price: unknown): number | null {
   if (typeof price === 'number') {
     return price;
   }
@@ -77,47 +69,12 @@ export async function readJsonFile<T = any>(path: string): Promise<T> {
   return JSON.parse(text);
 }
 
-export async function writeJsonFile(path: string, data: any): Promise<void> {
-  await Bun.write(path, JSON.stringify(data, null, 2));
-}
-
 export function generateEmojiSvg(emoji: string): string {
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
     <text y=".9em" font-size="90">${emoji}</text>
   </svg>`;
 }
 
-export function normalizeString(str: string): string {
-  return str.toLowerCase().replace(/[\s\-_\.]/g, '');
-}
-
 export function getEnvVar(envVarName: string): string | undefined {
   return process.env[envVarName];
-}
-
-export async function retryAsync<T>(
-  fn: () => Promise<T>,
-  options: {
-    maxAttempts: number;
-    delayMs: number;
-    onRetry?: (attempt: number, error: Error) => void;
-  }
-): Promise<T> {
-  const { maxAttempts, delayMs, onRetry } = options;
-  let lastError: Error | null = null;
-
-  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-    try {
-      return await fn();
-    } catch (error) {
-      lastError = error instanceof Error ? error : new Error(String(error));
-
-      if (attempt < maxAttempts) {
-        onRetry?.(attempt, lastError);
-        await delay(delayMs);
-      }
-    }
-  }
-
-  throw lastError || new Error('Unknown error during retry attempts');
 }

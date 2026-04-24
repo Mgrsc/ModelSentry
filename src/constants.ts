@@ -4,25 +4,10 @@ export const DEFAULT_RETRY_INTERVAL_MS = 2 * 60 * 1000;
 export const GRACE_PERIOD_MS = 2 * 60 * 1000;
 export const NEW_MODEL_HIGHLIGHT_HOURS = 24;
 
-export const BENCHMARK_PRICE_PER_MILLION_TOKENS = 2.0;
-export const PRICE_DECIMAL_PLACES = 5;
-
 export const DEFAULT_USER_AGENT = 'ModelSentry/1.0';
 export const DEFAULT_CONTENT_TYPE = 'application/json';
 
 export const DEFAULT_SERVER_PORT = 3000;
-
-export const LOG_LEVELS = {
-  DEBUG: 0,
-  INFO: 1,
-  WARN: 2,
-  ERROR: 3,
-} as const;
-
-export const CDN_BASE_URLS = {
-  npmmirror: 'https://registry.npmmirror.com',
-  unpkg: 'https://unpkg.com',
-} as const;
 
 export const JINA_READER_BASE_URL = 'https://r.jina.ai/';
 

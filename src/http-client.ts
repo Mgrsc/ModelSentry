@@ -1,5 +1,5 @@
 import { log } from './logger.ts';
-import { retryAsync, sanitizeUrl } from './utils.ts';
+import { sanitizeUrl } from './utils.ts';
 import { DEFAULT_USER_AGENT, DEFAULT_CONTENT_TYPE, ERROR_MESSAGES } from './constants.ts';
 
 export interface HttpClientOptions {
@@ -7,12 +7,6 @@ export interface HttpClientOptions {
   method?: string;
   body?: string;
   timeoutMs?: number;
-}
-
-export interface RetryOptions {
-  maxAttempts: number;
-  intervalMs: number;
-  onRetry?: (attempt: number, error: Error) => void;
 }
 
 export class HttpClient {
@@ -62,45 +56,8 @@ export class HttpClient {
     }
   }
 
-  async fetchWithRetry(
-    url: string,
-    options: HttpClientOptions = {},
-    retryOptions: RetryOptions
-  ): Promise<Response> {
-    return retryAsync(
-      () => this.fetch(url, options),
-      {
-        maxAttempts: retryOptions.maxAttempts,
-        delayMs: retryOptions.intervalMs,
-        onRetry: retryOptions.onRetry
-      }
-    );
-  }
-
   async fetchJson<T = any>(url: string, options: HttpClientOptions = {}): Promise<T> {
     const response = await this.fetch(url, options);
-    return await response.json();
-  }
-
-  async fetchJsonWithRetry<T = any>(
-    url: string,
-    options: HttpClientOptions = {},
-    retryOptions: RetryOptions
-  ): Promise<T> {
-    const response = await this.fetchWithRetry(url, options, retryOptions);
-    return await response.json();
-  }
-
-  async postJson<T = any>(url: string, data: any, options: HttpClientOptions = {}): Promise<T> {
-    const response = await this.fetch(url, {
-      ...options,
-      method: 'POST',
-      body: JSON.stringify(data),
-      headers: {
-        'Content-Type': 'application/json',
-        ...options.headers
-      }
-    });
     return await response.json();
   }
 }

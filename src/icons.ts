@@ -68,8 +68,8 @@ export class IconManager {
       return matchedIcon;
     }
 
-    log.debug('Using fallback icon', { providerName, fallback: 'openai' });
-    return 'openai';
+    log.debug('Using fallback icon', { providerName, fallback: this.globalSettings.fallbackIcon });
+    return this.globalSettings.fallbackIcon;
   }
 
   private fuzzyMatchIcon(providerName: string): string | null {

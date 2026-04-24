@@ -146,57 +146,6 @@
             border-width: 1px;
         }
 
-        /* Dropdown */
-        .dropdown {
-            position: relative;
-            display: inline-block;
-        }
-
-        .dropdown-menu {
-            display: none;
-            position: absolute;
-            right: 0;
-            top: 100%;
-            margin-top: 0.5rem;
-            background-color: white;
-            min-width: 160px;
-            box-shadow: var(--shadow-md);
-            border-radius: var(--radius-sm);
-            border: 1px solid var(--border-color);
-            z-index: 1000;
-            overflow: hidden;
-            flex-direction: column;
-        }
-
-        .dropdown-menu.show {
-            display: flex;
-            animation: slideDown 0.2s ease;
-        }
-
-        .dropdown-item {
-            padding: 0.8rem 1rem;
-            text-decoration: none;
-            color: var(--text-secondary);
-            font-size: 0.9rem;
-            border-bottom: 1px solid #f0f0f0;
-            transition: background 0.2s;
-            display: block;
-        }
-
-        .dropdown-item:last-child {
-            border-bottom: none;
-        }
-
-        .dropdown-item:hover {
-            background-color: #f8f9fa;
-            color: var(--primary-color);
-        }
-
-        @keyframes slideDown {
-            from { opacity: 0; transform: translateY(-10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
         /* Refresh Icon Animation */
         .refresh-icon {
             display: inline-block;
@@ -347,19 +296,6 @@
             font-variant-numeric: tabular-nums;
         }
 
-        .ratio-cell {
-            padding: 4px 10px !important;
-            font-size: 0.85rem;
-            background-color: var(--status-neutral-bg);
-            color: var(--text-primary);
-            font-weight: 600;
-            border-radius: 4px;
-        }
-
-        .pricing-table td:has(.ratio-cell) {
-            padding: 0.8rem 1.5rem !important; /* Restore padding */
-        }
-
         .empty-state {
             padding: 3rem;
             text-align: center;
@@ -439,7 +375,7 @@
         <header class="header">
             <div>
                 <h1>模型价格对比</h1>
-                <p class="subtitle">实时获取各大 AI 提供商的模型价格与倍率</p>
+                <p class="subtitle">实时获取各大 AI 提供商的模型价格</p>
             </div>
 
             <div class="actions-bar">
@@ -491,17 +427,6 @@
                             <span class="refresh-icon">↻</span> 刷新 ({{refreshStatus.remaining}})
                         </button>
 
-                        <div class="dropdown">
-                            <button class="btn btn-secondary btn-xs" onclick="toggleDropdown(event, '{{name}}')">
-                                复制倍率 ▾
-                            </button>
-                            <div id="dropdown-{{name}}" class="dropdown-menu">
-                                <a href="#" class="dropdown-item" onclick="copyRatios(event, '{{name}}', 'model')">仅模型倍率</a>
-                                <a href="#" class="dropdown-item" onclick="copyRatios(event, '{{name}}', 'completion')">仅补全倍率</a>
-                                <a href="#" class="dropdown-item" onclick="copyRatios(event, '{{name}}', 'both')">全部复制</a>
-                            </div>
-                        </div>
-
                         {{#error}}
                             <span class="status-badge error">获取失败</span>
                         {{/error}}
@@ -523,11 +448,9 @@
                     <table class="pricing-table">
                         <thead>
                             <tr>
-                                <th style="width: 30%">模型名称</th>
-                                <th style="width: 20%">输入价格 ($/1M)</th>
-                                <th style="width: 20%">输出价格 ($/1M)</th>
-                                <th style="width: 15%">输入倍率</th>
-                                <th style="width: 15%">输出倍率</th>
+                                <th style="width: 50%">模型名称</th>
+                                <th style="width: 25%">输入价格 ($/1M)</th>
+                                <th style="width: 25%">输出价格 ($/1M)</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -538,8 +461,6 @@
                                 </td>
                                 <td class="price-cell">{{inputPrice}}</td>
                                 <td class="price-cell">{{outputPrice}}</td>
-                                <td><span class="ratio-cell">{{modelRatio}}</span></td>
-                                <td><span class="ratio-cell">{{completionRatio}}</span></td>
                             </tr>
                             {{/models}}
                         </tbody>
@@ -673,24 +594,6 @@
             if (resetEl && info.resetAtLocal) resetEl.textContent = info.resetAtLocal;
         }
 
-        // Dropdown Logic
-        function toggleDropdown(event, id) {
-            event.stopPropagation();
-            closeAllDropdowns();
-            const el = document.getElementById('dropdown-' + id);
-            if (el) el.classList.toggle('show');
-        }
-
-        function closeAllDropdowns() {
-            document.querySelectorAll('.dropdown-menu').forEach(el => el.classList.remove('show'));
-        }
-
-        window.onclick = function(event) {
-            if (!event.target.closest('.dropdown')) {
-                closeAllDropdowns();
-            }
-        }
-
         // Toast Logic
         function showToast(message, type = 'normal') {
             const container = document.getElementById('toast-container');
@@ -707,69 +610,6 @@
                 toast.classList.remove('show');
                 setTimeout(() => toast.remove(), 300);
             }, 3000);
-        }
-
-        // Copy Logic
-        async function copyRatios(event, providerName, type) {
-            event.preventDefault();
-            closeAllDropdowns();
-
-            const card = event.target.closest('.pricing-card');
-            const rows = card.querySelectorAll('tbody tr');
-
-            let modelRatios = {};
-            let completionRatios = {};
-            let hasData = false;
-
-            rows.forEach(row => {
-                // Parse clean text from HTML content (removing alias spans)
-                const nameCell = row.cells[0];
-                let modelName = nameCell.childNodes[0].textContent.trim();
-
-                // Fallback if structure is different
-                if (!modelName) modelName = nameCell.textContent.trim();
-
-                const mRatio = parseFloat(row.cells[3].textContent);
-                const cRatio = parseFloat(row.cells[4].textContent);
-
-                if (modelName && !isNaN(mRatio)) {
-                    modelRatios[modelName] = mRatio;
-                    hasData = true;
-                }
-                if (modelName && !isNaN(cRatio)) {
-                    completionRatios[modelName] = cRatio;
-                }
-            });
-
-            if (!hasData) {
-                showToast('无数据可复制', 'error');
-                return;
-            }
-
-            let text = '';
-            if (type === 'model' || type === 'both') {
-                text += `Model_ratio:\n${JSON.stringify(modelRatios, null, 2)}`;
-            }
-            if (type === 'both' && Object.keys(completionRatios).length) text += '\n\n';
-            if (type === 'completion' || type === 'both') {
-                if (Object.keys(completionRatios).length) {
-                    text += `completion_ratio:\n${JSON.stringify(completionRatios, null, 2)}`;
-                }
-            }
-
-            try {
-                await navigator.clipboard.writeText(text);
-                showToast('复制成功');
-            } catch (err) {
-                // Fallback
-                const ta = document.createElement('textarea');
-                ta.value = text;
-                document.body.appendChild(ta);
-                ta.select();
-                document.execCommand('copy');
-                document.body.removeChild(ta);
-                showToast('已复制到剪贴板');
-            }
         }
 
         // Auto refresh

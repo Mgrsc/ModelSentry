@@ -1,12 +1,15 @@
 import { loadConfig, Config } from './config.ts';
 import { ProviderManager } from './providers.ts';
-import { NotificationManager } from './notifications.ts';
+import { NotificationManager, type ModelChange } from './notifications.ts';
 import { ModelMonitor } from './monitor.ts';
 import { IconManager } from './icons.ts';
-import { PricingManager, PricingConfig, PricingProviderEvent } from './pricing.ts';
-import { createCacheProvider, type CacheProvider, type CacheSnapshotV1 } from './cache-provider.ts';
+import { PricingManager, PricingConfig, PricingProviderEvent, type ProviderPricing } from './pricing.ts';
+import { createCacheProvider, type CacheProvider } from './cache-provider.ts';
+import { ManualRefreshLimiter } from './manual-refresh-limiter.ts';
+import { buildHomeTemplateData, buildPricingTemplateData } from './template-data.ts';
+import { htmlResponse, internalServerError, jsonResponse, textResponse } from './http-responses.ts';
 import { log } from './logger.ts';
-import { formatDate, getContentType, generateEmojiSvg } from './utils.ts';
+import { getContentType, generateEmojiSvg } from './utils.ts';
 import { DEFAULT_SERVER_PORT, ERROR_MESSAGES, TEMPLATE_PATHS } from './constants.ts';
 import mustache from 'mustache';
 
@@ -17,13 +20,9 @@ class ModelSentryServer {
   private monitor!: ModelMonitor;
   private iconManager!: IconManager;
   private pricingManager!: PricingManager | null;
-  private server!: any;
-  private cacheSnapshot: CacheSnapshotV1 | null = null;
+  private server!: ReturnType<typeof Bun.serve>;
   private cacheProvider: CacheProvider = createCacheProvider('memory');
-  private manualPricingRefreshCount = 0;
-  private manualPricingRefreshCountByProvider: Map<string, number> = new Map();
-  private manualPricingRefreshDateKey: string | null = null;
-  private readonly MANUAL_PRICING_REFRESH_LIMIT = 2;
+  private manualRefreshLimiter = new ManualRefreshLimiter(2);
 
   async initialize(): Promise<void> {
     try {
@@ -36,7 +35,7 @@ class ModelSentryServer {
         this.config.cacheSettings?.backend || 'memory',
         this.config.cacheSettings?.filePath
       );
-      this.cacheSnapshot = await this.cacheProvider.load();
+      const cacheSnapshot = await this.cacheProvider.load();
 
       log.info('Initializing components', {
         providers: this.config.providers.length,
@@ -44,7 +43,7 @@ class ModelSentryServer {
       });
 
       this.providerManager = new ProviderManager(this.config.providers, this.cacheProvider);
-      this.providerManager.applyCachedProviderStatuses(this.cacheSnapshot?.providers);
+      this.providerManager.applyCachedProviderStatuses(cacheSnapshot.providers);
       this.notificationManager = new NotificationManager(this.config.notifications);
       this.iconManager = new IconManager(this.config.iconSettings!);
 
@@ -66,7 +65,7 @@ class ModelSentryServer {
           this.cacheProvider,
           (event: PricingProviderEvent) => this.handlePricingProviderEvent(event)
         );
-        this.pricingManager.applyCachedPricing(this.cacheSnapshot?.pricing);
+        this.pricingManager.applyCachedPricing(cacheSnapshot.pricing);
         log.info('Pricing manager initialized', {
           providers: pricingConfig.providers.length,
           model: pricingConfig.llmModel,
@@ -127,7 +126,7 @@ class ModelSentryServer {
             return await this.handleApiPricingRefreshProvider(providerId || '');
           }
 
-          return new Response('Not Found', { status: 404 });
+          return textResponse('Not Found', 404);
         }
       });
 
@@ -140,19 +139,23 @@ class ModelSentryServer {
   private async handleHomePage(): Promise<Response> {
     try {
       const templateFile = Bun.file(TEMPLATE_PATHS.INDEX);
-      let template = await templateFile.text();
+      const template = await templateFile.text();
 
       const status = this.monitor.getStatus();
-      const templateData = this.buildTemplateData(status);
+      const templateData = buildHomeTemplateData(
+        this.config,
+        this.iconManager,
+        status,
+        !!this.pricingManager,
+        (providerId, modelName) => this.monitor.isNewModel(providerId, modelName)
+      );
 
       const html = this.renderTemplate(template, templateData);
 
-      return new Response(html, {
-        headers: { 'Content-Type': 'text/html; charset=utf-8' }
-      });
+      return htmlResponse(html);
     } catch (error) {
       log.error('Error rendering home page', error instanceof Error ? error.message : String(error));
-      return new Response('Internal Server Error', { status: 500 });
+      return internalServerError();
     }
   }
 
@@ -175,41 +178,37 @@ class ModelSentryServer {
         });
       }
 
-      return new Response('Not Found', { status: 404 });
+      return textResponse('Not Found', 404);
     } catch (error) {
       log.error('Error serving static file', error instanceof Error ? error.message : String(error), { pathname });
-      return new Response('Internal Server Error', { status: 500 });
+      return internalServerError();
     }
   }
 
   private async handleApiStatus(): Promise<Response> {
     try {
       const status = this.monitor.getStatus();
-      return new Response(JSON.stringify(status), {
-        headers: { 'Content-Type': 'application/json' }
-      });
+      return jsonResponse(status);
     } catch (error) {
       log.error('Error getting status', error instanceof Error ? error.message : String(error));
-      return new Response('Internal Server Error', { status: 500 });
+      return internalServerError();
     }
   }
 
   private async handleForceCheck(): Promise<Response> {
     try {
       await this.monitor.forceCheck();
-      return new Response(JSON.stringify({ success: true }), {
-        headers: { 'Content-Type': 'application/json' }
-      });
+      return jsonResponse({ success: true });
     } catch (error) {
       log.error('Error forcing check', error instanceof Error ? error.message : String(error));
-      return new Response('Internal Server Error', { status: 500 });
+      return internalServerError();
     }
   }
 
   private async handlePricingPage(): Promise<Response> {
     try {
       if (!this.pricingManager) {
-        return new Response('Pricing feature is disabled', { status: 404 });
+        return textResponse('Pricing feature is disabled', 404);
       }
 
       const isLoading = this.pricingManager.isCurrentlyLoading();
@@ -220,9 +219,7 @@ class ModelSentryServer {
         const template = await templateFile.text();
         const templateData = this.buildPricingTemplateData([], true);
         const html = this.renderTemplate(template, templateData);
-        return new Response(html, {
-          headers: { 'Content-Type': 'text/html; charset=utf-8' }
-        });
+        return htmlResponse(html);
       }
 
       const templateFile = Bun.file(TEMPLATE_PATHS.PRICING);
@@ -231,132 +228,98 @@ class ModelSentryServer {
 
       const html = this.renderTemplate(template, templateData);
 
-      return new Response(html, {
-        headers: { 'Content-Type': 'text/html; charset=utf-8' }
-      });
+      return htmlResponse(html);
     } catch (error) {
       log.error('Error rendering pricing page', error instanceof Error ? error.message : String(error));
-      return new Response('Internal Server Error', { status: 500 });
+      return internalServerError();
     }
   }
 
   private async handleApiPricing(): Promise<Response> {
     try {
       if (!this.pricingManager) {
-        return new Response(JSON.stringify({ error: 'Pricing feature is disabled' }), {
-          status: 404,
-          headers: { 'Content-Type': 'application/json' }
-        });
+        return jsonResponse({ error: 'Pricing feature is disabled' }, 404);
       }
 
       const pricingData = await this.pricingManager.getPricingData();
-      return new Response(JSON.stringify(pricingData), {
-        headers: { 'Content-Type': 'application/json' }
-      });
+      return jsonResponse(pricingData);
     } catch (error) {
       log.error('Error getting pricing data', error instanceof Error ? error.message : String(error));
-      return new Response('Internal Server Error', { status: 500 });
+      return internalServerError();
     }
   }
 
   private async handleApiPricingRefresh(): Promise<Response> {
     try {
       if (!this.pricingManager) {
-        return new Response(JSON.stringify({ error: 'Pricing feature is disabled' }), {
-          status: 404,
-          headers: { 'Content-Type': 'application/json' }
-        });
+        return jsonResponse({ error: 'Pricing feature is disabled' }, 404);
       }
 
       const now = new Date();
-      this.resetManualPricingRefreshCounter(now);
-      let manualStatus = this.getManualRefreshStatus(now);
+      let manualStatus = this.manualRefreshLimiter.getStatus(now);
 
       if (this.pricingManager.isCurrentlyLoading()) {
         log.info('Manual pricing refresh skipped - pricing update already in progress', {
           remaining: manualStatus.remaining,
           resetAt: manualStatus.resetAt
         });
-        return new Response(JSON.stringify({
+        return jsonResponse({
           success: false,
           error: '价格刷新正在进行中，请稍后再试。',
           inProgress: true,
           manualRefresh: manualStatus
-        }), {
-          status: 202,
-          headers: { 'Content-Type': 'application/json' }
-        });
+        }, 202);
       }
 
       if (manualStatus.remaining <= 0) {
         log.info('Manual pricing refresh denied - daily limit reached', {
-          limit: this.MANUAL_PRICING_REFRESH_LIMIT,
+          limit: manualStatus.limit,
           resetAt: manualStatus.resetAt
         });
-        return new Response(JSON.stringify({
+        return jsonResponse({
           error: '今日刷新次数已达上限，请明天再试。',
           manualRefresh: manualStatus
-        }), {
-          status: 429,
-          headers: { 'Content-Type': 'application/json' }
-        });
+        }, 429);
       }
 
-      this.manualPricingRefreshCount += 1;
-      manualStatus = this.getManualRefreshStatus(now);
+      manualStatus = this.manualRefreshLimiter.consume(now);
       log.info('Manual pricing refresh triggered', {
-        count: this.manualPricingRefreshCount,
         remaining: manualStatus.remaining,
         resetAt: manualStatus.resetAt
       });
 
       const pricingData = await this.pricingManager.getPricingData({ forceRefresh: true, reason: 'manual-refresh' });
-      return new Response(JSON.stringify({
+      return jsonResponse({
         success: true,
         data: pricingData,
         manualRefresh: manualStatus
-      }), {
-        headers: { 'Content-Type': 'application/json' }
       });
     } catch (error) {
       log.error('Error refreshing pricing data', error instanceof Error ? error.message : String(error));
-      return new Response(JSON.stringify({
+      return jsonResponse({
         error: 'Failed to refresh pricing data',
-        manualRefresh: this.getManualRefreshStatus()
-      }), {
-        status: 500,
-        headers: { 'Content-Type': 'application/json' }
-      });
+        manualRefresh: this.manualRefreshLimiter.getStatus()
+      }, 500);
     }
   }
 
   private async handleApiPricingRefreshProvider(providerId: string): Promise<Response> {
     try {
       if (!this.pricingManager) {
-        return new Response(JSON.stringify({ error: 'Pricing feature is disabled' }), {
-          status: 404,
-          headers: { 'Content-Type': 'application/json' }
-        });
+        return jsonResponse({ error: 'Pricing feature is disabled' }, 404);
       }
 
       if (!providerId) {
-        return new Response(JSON.stringify({ error: 'Provider ID is required' }), {
-          status: 400,
-          headers: { 'Content-Type': 'application/json' }
-        });
+        return jsonResponse({ error: 'Provider ID is required' }, 400);
       }
 
       const providerExists = this.config.pricingSettings?.providers.some(p => p.id === providerId);
       if (!providerExists) {
-        return new Response(JSON.stringify({ error: `Provider '${providerId}' not found` }), {
-          status: 404,
-          headers: { 'Content-Type': 'application/json' }
-        });
+        return jsonResponse({ error: `Provider '${providerId}' not found` }, 404);
       }
 
       const now = new Date();
-      this.resetManualPricingRefreshCounter(now);
-      let manualStatus = this.getManualRefreshStatus(now, providerId);
+      let manualStatus = this.manualRefreshLimiter.getStatus(now, providerId);
 
       if (this.pricingManager.isCurrentlyLoading()) {
         log.info('Manual pricing refresh skipped - pricing update already in progress', {
@@ -364,179 +327,55 @@ class ModelSentryServer {
           remaining: manualStatus.remaining,
           resetAt: manualStatus.resetAt
         });
-        return new Response(JSON.stringify({
+        return jsonResponse({
           success: false,
           error: '价格刷新正在进行中，请稍后再试。',
           inProgress: true,
           manualRefresh: manualStatus
-        }), {
-          status: 202,
-          headers: { 'Content-Type': 'application/json' }
-        });
+        }, 202);
       }
 
       if (manualStatus.remaining <= 0) {
         log.info('Manual pricing refresh denied - daily limit reached', {
           providerId,
-          limit: this.MANUAL_PRICING_REFRESH_LIMIT,
+          limit: manualStatus.limit,
           resetAt: manualStatus.resetAt
         });
-        return new Response(JSON.stringify({
+        return jsonResponse({
           error: `${providerId} 今日刷新次数已达上限，请明天再试。`,
           manualRefresh: manualStatus
-        }), {
-          status: 429,
-          headers: { 'Content-Type': 'application/json' }
-        });
+        }, 429);
       }
 
-      const currentCount = this.manualPricingRefreshCountByProvider.get(providerId) || 0;
-      this.manualPricingRefreshCountByProvider.set(providerId, currentCount + 1);
-      manualStatus = this.getManualRefreshStatus(now, providerId);
+      manualStatus = this.manualRefreshLimiter.consume(now, providerId);
       log.info('Manual pricing refresh triggered for provider', {
         providerId,
-        count: currentCount + 1,
         remaining: manualStatus.remaining,
         resetAt: manualStatus.resetAt
       });
 
       const pricingData = await this.pricingManager.refreshProviders([providerId], 'manual-refresh-provider');
-      return new Response(JSON.stringify({
+      return jsonResponse({
         success: true,
         data: pricingData,
         manualRefresh: manualStatus
-      }), {
-        headers: { 'Content-Type': 'application/json' }
       });
     } catch (error) {
       log.error('Error refreshing provider pricing data', error instanceof Error ? error.message : String(error), { providerId });
-      return new Response(JSON.stringify({
+      return jsonResponse({
         error: 'Failed to refresh provider pricing data',
-        manualRefresh: this.getManualRefreshStatus(new Date(), providerId)
-      }), {
-        status: 500,
-        headers: { 'Content-Type': 'application/json' }
-      });
+        manualRefresh: this.manualRefreshLimiter.getStatus(new Date(), providerId)
+      }, 500);
     }
   }
 
-  private resetManualPricingRefreshCounter(now: Date): void {
-    const todayKey = this.formatDateKey(now);
-    if (this.manualPricingRefreshDateKey !== todayKey) {
-      this.manualPricingRefreshCount = 0;
-      this.manualPricingRefreshCountByProvider.clear();
-      this.manualPricingRefreshDateKey = todayKey;
-    }
-  }
-
-  private formatDateKey(date: Date): string {
-    return date.toISOString().slice(0, 10);
-  }
-
-  private getNextManualPricingResetDate(now: Date): Date {
-    const reset = new Date(now);
-    reset.setUTCHours(0, 0, 0, 0);
-    reset.setUTCDate(reset.getUTCDate() + 1);
-    return reset;
-  }
-
-  private getManualRefreshStatus(now: Date = new Date(), providerId?: string): {
-    limit: number;
-    remaining: number;
-    resetAt: string;
-    resetAtLocal: string;
-  } {
-    const resetDate = this.getNextManualPricingResetDate(now);
-    let remaining: number;
-
-    if (providerId) {
-      const providerCount = this.manualPricingRefreshCountByProvider.get(providerId) || 0;
-      remaining = Math.max(0, this.MANUAL_PRICING_REFRESH_LIMIT - providerCount);
-    } else {
-      remaining = Math.max(0, this.MANUAL_PRICING_REFRESH_LIMIT - this.manualPricingRefreshCount);
-    }
-
-    return {
-      limit: this.MANUAL_PRICING_REFRESH_LIMIT,
-      remaining,
-      resetAt: resetDate.toISOString(),
-      resetAtLocal: formatDate(resetDate)
-    };
-  }
-
-  private buildTemplateData(status: any): any {
-    const enabledProviders = status.providers.filter((p: any) => p.enabled);
-
-    return {
-      title: this.config.frontendSettings.title,
-      faviconUrl: this.config.frontendSettings.faviconUrl || '/static/favicon.ico',
-      backgroundCss: this.getBackgroundCss(),
-      backgroundClass: this.config.frontendSettings.backgroundImageUrl ? '' : 'animated-bg',
-      backgroundOpacity: this.config.frontendSettings.backgroundOpacity || 0.7,
-      modelCopySeparator: this.config.frontendSettings.modelCopySeparator || ',',
-      totalProviders: status.providers.length,
-      enabledProviders: enabledProviders.length,
-      pricingEnabled: !!this.pricingManager,
-      providers: status.providers.map((provider: any) => {
-        const providerConfig = this.config.providers.find(p => p.id === provider.id);
-
-        const iconHtml = this.iconManager.generateIconHtml(provider.name, providerConfig?.icon);
-        const iconUrl = this.iconManager.generateIconUrl(provider.name, providerConfig?.icon);
-
-        const models = provider.enabled ? (provider.models || []) : [];
-
-        return {
-          ...provider,
-          lastCheck: provider.lastCheck ? formatDate(provider.lastCheck) : null,
-          lastSuccess: provider.lastSuccess ? formatDate(provider.lastSuccess) : null,
-          nextRetryAt: provider.nextRetryAt ? formatDate(provider.nextRetryAt) : null,
-          iconHtml,
-          iconUrl,
-          models: models.map((model: any) => ({
-            ...model,
-            id: provider.id,
-            isNew: this.monitor.isNewModel(provider.id, model.name)
-          })),
-          modelCount: models.length
-        };
-      })
-    };
-  }
-
-  private buildPricingTemplateData(pricingData: any[], isLoading: boolean): any {
-    const now = new Date();
-    return {
-      title: this.config.frontendSettings.title,
-      faviconUrl: this.config.frontendSettings.faviconUrl || '/static/favicon.ico',
-      backgroundCss: this.getBackgroundCss(),
-      backgroundClass: this.config.frontendSettings.backgroundImageUrl ? '' : 'animated-bg',
-      backgroundOpacity: this.config.frontendSettings.backgroundOpacity || 0.7,
-      isLoading: isLoading,
-      manualRefresh: this.getManualRefreshStatus(now),
-      providers: pricingData.map((provider: any) => {
-        this.resetManualPricingRefreshCounter(now);
-        const providerRefreshStatus = this.getManualRefreshStatus(now, provider.id);
-
-        return {
-          ...provider,
-          lastUpdated: provider.lastUpdated instanceof Date && provider.lastUpdated.getTime() === 0
-            ? '从未更新'
-            : formatDate(provider.lastUpdated),
-          refreshStatus: providerRefreshStatus,
-          models: (provider.models || []).map((model: any) => ({
-            ...model,
-            pricingUrl: provider.pricingUrl
-          }))
-        };
-      })
-    };
-  }
-
-  private getBackgroundCss(): string {
-    if (this.config.frontendSettings.backgroundImageUrl) {
-      return `url('${this.config.frontendSettings.backgroundImageUrl}')`;
-    }
-    return 'linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab)';
+  private buildPricingTemplateData(pricingData: ProviderPricing[], isLoading: boolean): unknown {
+    return buildPricingTemplateData(
+      this.config,
+      pricingData,
+      isLoading,
+      (providerId, now) => this.manualRefreshLimiter.getStatus(now, providerId)
+    );
   }
 
   private renderTemplate(template: string, data: any): string {
@@ -557,7 +396,7 @@ class ModelSentryServer {
     await this.notificationManager.sendNotifications(change);
   }
 
-  private async handleModelChangeForPricing(change: { providerId: string; providerName: string; added: any[]; removed: any[] }): Promise<void> {
+  private async handleModelChangeForPricing(change: ModelChange): Promise<void> {
     if (!this.pricingManager) return;
     if (!this.config.pricingSettings?.enabled) return;
     if (change.added.length === 0 && change.removed.length === 0) return;
