@@ -36,12 +36,11 @@ COPY src/templates/ ./src/templates/
 COPY static/ ./static/
 COPY config/ ./config/
 COPY resources/ ./resources/
+COPY docker-entrypoint.sh ./docker-entrypoint.sh
 
 # Change ownership to non-root user
-RUN chown -R appuser:appuser /app
-
-# Switch to non-root user
-USER appuser
+RUN chown -R appuser:appuser /app && \
+    chmod +x /app/docker-entrypoint.sh
 
 # Expose port
 EXPOSE 3000
@@ -51,4 +50,5 @@ HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
   CMD bun run -e "fetch('http://localhost:3000/api/status').then(r => r.ok ? process.exit(0) : process.exit(1)).catch(() => process.exit(1))"
 
 # Start the application directly
+ENTRYPOINT ["/app/docker-entrypoint.sh"]
 CMD ["bun", "run", "dist/server.js"]

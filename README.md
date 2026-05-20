@@ -26,7 +26,12 @@
 4. 使用 Docker 运行（读取本地 `.env`）：
    ```bash
    docker build -t modelsentry .
-   docker run -d --name modelsentry -p 3000:3000 --env-file .env modelsentry
+   docker run -d --name modelsentry \
+     -p 3000:3000 \
+     --env-file .env \
+     -v "$PWD/config:/app/config" \
+     -v "$PWD/data:/app/data" \
+     modelsentry
    ```
 
 ## 环境变量概览
@@ -62,7 +67,7 @@
 }
 ```
 
-Docker 部署想要缓存跨“容器重建”保留，需要把 `filePath` 的父目录（如 `data/`）挂载成 volume。
+Docker 部署想要缓存跨“容器重建”保留，需要把 `filePath` 的父目录（如 `data/`）挂载成 volume。默认 Compose 示例已经挂载 `./data:/app/data`。
 
 ## 用 AI 生成 Provider 配置
 拿到某个提供商的 `list models` 响应后，可以把下面这段提示词丢给任意 LLM，让它生成可直接放进 `config/providers.json` 的 `providers` 数组中的 JSON 片段：
@@ -224,4 +229,3 @@ Please only return JSON, no explanations. Output example:
 
 ## License
 MIT License
-
