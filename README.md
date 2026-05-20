@@ -30,9 +30,11 @@
      -p 3000:3000 \
      --env-file .env \
      -v "$PWD/config:/app/config" \
-     -v "$PWD/data:/app/data" \
+     -v "$PWD/data:/data" \
      modelsentry
    ```
+
+   容器内的持久化数据目录是 `/data`，镜像内同时保留 `/app/data -> /data` 的兼容路径。因此 `cacheSettings.filePath` 写成 `data/modelsentry-cache.json` 或 `/data/modelsentry-cache.json` 都会写入同一个持久化目录。启动入口会先尝试修正 `/app/config`、`/data` 和 `/app/data` 的所有者，再以非 root 用户启动应用。
 
 ## 环境变量概览
 - **运行与日志**：`PORT`, `LOG_LEVEL`
@@ -67,7 +69,7 @@
 }
 ```
 
-Docker 部署想要缓存跨“容器重建”保留，需要把 `filePath` 的父目录（如 `data/`）挂载成 volume。默认 Compose 示例已经挂载 `./data:/app/data`。
+Docker 部署想要缓存跨“容器重建”保留，需要把 `filePath` 的父目录挂载成 volume。默认 Compose 示例已经挂载 `./data:/data`。
 
 ## 用 AI 生成 Provider 配置
 拿到某个提供商的 `list models` 响应后，可以把下面这段提示词丢给任意 LLM，让它生成可直接放进 `config/providers.json` 的 `providers` 数组中的 JSON 片段：

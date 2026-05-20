@@ -29,6 +29,7 @@ prepare_directory() {
 
 if [ "$(id -u)" = "0" ]; then
   prepare_directory "$APP_ROOT/config"
+  prepare_directory "/data"
   prepare_directory "$APP_ROOT/data"
 
   if command -v runuser >/dev/null 2>&1; then
