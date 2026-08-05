@@ -25,7 +25,6 @@ export interface ProviderPricing {
 }
 
 export interface PricingConfig {
-  jinaApiKey: string;
   llmApiKey: string;
   llmBaseUrl: string;
   llmModel: string;

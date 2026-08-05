@@ -10,6 +10,7 @@ export const DEFAULT_CONTENT_TYPE = 'application/json';
 export const DEFAULT_SERVER_PORT = 3000;
 
 export const JINA_READER_BASE_URL = 'https://r.jina.ai/';
+export const FIRECRAWL_SCRAPE_URL = 'https://api.firecrawl.dev/v2/scrape';
 
 export const DEFAULT_ICON_SETTINGS = {
   enabled: true,

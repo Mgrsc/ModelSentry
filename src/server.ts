@@ -49,7 +49,6 @@ class ModelSentryServer {
 
       if (this.config.pricingSettings?.enabled) {
         const pricingConfig: PricingConfig = {
-          jinaApiKey: process.env[this.config.pricingSettings.jinaApiKeyEnvVar] || '',
           llmApiKey: process.env[this.config.pricingSettings.llmApiKeyEnvVar] || '',
           llmBaseUrl: this.config.pricingSettings.llmBaseUrl,
           llmModel: this.config.pricingSettings.llmModel,

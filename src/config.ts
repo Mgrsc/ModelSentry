@@ -80,7 +80,6 @@ export interface PricingProviderConfig {
 
 export interface PricingSettings {
   enabled: boolean;
-  jinaApiKeyEnvVar: string;
   llmApiKeyEnvVar: string;
   llmBaseUrl: string;
   llmBaseUrlEnvVar?: string;
@@ -176,7 +175,6 @@ function processConfig(config: Config): Config {
 function processPricingSettings(settings: PricingSettings): PricingSettings {
   const defaults = {
     enabled: false,
-    jinaApiKeyEnvVar: 'JINA_API_KEY',
     llmApiKeyEnvVar: 'OPENAI_API_KEY',
     llmBaseUrl: 'https://api.openai.com/v1/chat/completions',
     llmBaseUrlEnvVar: 'LLM_BASE_URL',
@@ -322,13 +320,7 @@ function getRequiredEnvVarsForProvider(provider: ProviderConfig): string[] {
 }
 
 function validateAndFilterPricing(pricingSettings: PricingSettings): PricingSettings {
-  const jinaApiKey = getEnvVar(pricingSettings.jinaApiKeyEnvVar);
   const llmApiKey = getEnvVar(pricingSettings.llmApiKeyEnvVar);
-
-  if (!jinaApiKey || jinaApiKey.trim().length === 0) {
-    console.warn(`⚠️  Pricing feature is enabled but missing Jina API key environment variable '${pricingSettings.jinaApiKeyEnvVar}'. Auto-disabling.`);
-    return { ...pricingSettings, enabled: false };
-  }
 
   if (!llmApiKey || llmApiKey.trim().length === 0) {
     console.warn(`⚠️  Pricing feature is enabled but missing LLM API key environment variable '${pricingSettings.llmApiKeyEnvVar}'. Auto-disabling.`);

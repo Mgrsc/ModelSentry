@@ -139,7 +139,6 @@ function mockLlmResponse(content: unknown): void {
 
 function createConfig(): PricingConfig {
   return {
-    jinaApiKey: 'jina-key',
     llmApiKey: 'llm-key',
     llmBaseUrl: 'https://example.com/chat/completions',
     llmModel: 'test-model',

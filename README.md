@@ -39,7 +39,7 @@
 ## 环境变量概览
 - **运行与日志**：`PORT`, `LOG_LEVEL`
 - **模型提供商**：`OPENAI_API_KEY`, `CLAUDE_API_KEY`, `GEMINI_API_KEY`, `GROQ_API_KEY`, `XAI_API_KEY`, `MISTRAL_API_KEY`, `AI21_API_KEY`, `PERPLEXITY_API_KEY` 等（不用的可以留空或删除）
-- **价格抓取（可选）**：`JINA_API_KEY`, `LLM_API_KEY`, `LLM_BASE_URL`, `LLM_MODEL`
+- **价格抓取（可选）**：`LLM_API_KEY`, `LLM_BASE_URL`, `LLM_MODEL`（页面抓取走免费 Jina Reader + Firecrawl keyless，无需抓取 Key）
 - **通知**：`WEWORK_BOT_KEY_CHANGES`, `LARK_BOT_WEBHOOK_URL`, `MODEL_SENTRY_DETAIL_URL`
 - `.env.example` 覆盖了项目支持的变量，按需填充即可。
 
@@ -47,7 +47,7 @@
 - `config/config.json`：全局配置（轮询频率、前端显示、缓存等）
 - `config/providers.json`：各模型提供商的模型列表 API 配置
 - `config/notifications.json`：通知通道配置（Webhook 模板、触发条件等）
-- `config/pricing.json`：价格抓取配置（启用时需要额外 API Key）
+- `config/pricing.json`：价格抓取配置（启用时需要 LLM API Key；页面抓取使用免费通道）
 - `resources/prompts/pricing_system_prompt.txt`：价格解析用的系统提示词
 - `resources/icons/svg-name.txt`：已知图标列表（用于模糊匹配）
 
@@ -222,7 +222,7 @@ Please only return JSON, no explanations. Output example:
 
 ## 可选：价格抓取/展示
 - 在 `config/pricing.json` 中将 `pricingSettings.enabled` 设为 `true`
-- 配置 `JINA_API_KEY` 与 `LLM_API_KEY`。ModelSentry 使用 Jina Reader 拉取价格页内容，然后调用一个 OpenAI 兼容的 LLM 将内容转换为结构化 JSON（提示词在 `resources/prompts/pricing_system_prompt.txt`）。
+- 配置 `LLM_API_KEY`（以及可选的 `LLM_BASE_URL` / `LLM_MODEL`）。页面抓取默认轮询使用免费的公共 Jina Reader（`r.jina.ai`）与 Firecrawl keyless scrape；某一侧 429 时自动切到另一侧，都失败再直连目标页。抓取后调用 OpenAI 兼容 LLM 转成结构化 JSON（提示词在 `resources/prompts/pricing_system_prompt.txt`）。
 - 刷新行为：
   - 手动：访问 `/pricing`，点击 **刷新价格**（调用 `POST /api/pricing/refresh`）
   - 自动（无定时）：当某 provider 的模型列表发生变动时，会刷新“同 provider id”的价格数据

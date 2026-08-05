@@ -1,7 +1,6 @@
 {
   "pricingSettings": {
     "enabled": true,
-    "jinaApiKeyEnvVar": "JINA_API_KEY",
     "llmApiKeyEnvVar": "LLM_API_KEY",
     "llmBaseUrlEnvVar": "LLM_BASE_URL",
     "llmModelEnvVar": "LLM_MODEL",
